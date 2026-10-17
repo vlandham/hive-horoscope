@@ -40,6 +40,7 @@
   --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
 .wrap {
   max-width: 1080px; margin: 0 auto;
@@ -121,7 +122,13 @@ body:not([data-compare]) .compare { display: none; }
 .sw.me { background: var(--s-me); }
 .sw.them { background: var(--s-them); }
 .cmp-charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
-.compare .legend[hidden], .compare [hidden] { display: none; }
+
+body[data-state="loaded"] .no-data { display: none; }
+.friends { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: start; }
+.friends .method p { color: var(--muted); max-width: 52ch; }
+.friends .method > .btn { align-self: flex-start; }
+.paste-row { display: flex; gap: 8px; }
+.paste-row input { flex: 1; min-width: 0; font: 0.95rem var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 
 /* Share dialog */
 dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 24px; width: min(480px, calc(100vw - 32px)); }
@@ -212,7 +219,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
   .vitals div:nth-child(n+4) { border-top: 1px solid var(--line); }
 }
 @media (max-width: 720px) {
-  .hero, .charts, .cast, .cmp-charts { grid-template-columns: minmax(0, 1fr); }
+  .hero, .charts, .cast, .cmp-charts, .friends { grid-template-columns: minmax(0, 1fr); }
   .hive-wrap { max-width: 260px; margin: 0 auto; }
 }
 @media (max-width: 520px) {
@@ -238,7 +245,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
       <span class="who" id="who">Loading…</span>
       <label class="btn primary" for="file">Load your history</label>
       <a class="btn" href="#cast">How to get yours</a>
-      <button type="button" class="btn needs-data" id="share-open">Share my chart</button>
+      <a class="btn" href="#friends">Compare with a friend</a>
     </div>
   </header>
 
@@ -289,7 +296,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
         <li><span class="glyph" aria-hidden="true">↑</span><span><strong>Rising:</strong> how you open a puzzle.</span></li>
         <li><span class="glyph" aria-hidden="true">☾</span><span><strong>Moon:</strong> whether you mine one root or roam.</span></li>
       </ul>
-      <p>Plus six houses, your totem and crown words, and a replay of any game, word by word.</p>
+      <p>Plus six houses, your totem and crown words, a replay of any game, word by word, and a way to <a href="#friends">compare your chart with a friend's</a>.</p>
       <div class="actions">
         <a class="btn primary" href="#cast">Cast my chart</a>
         <label class="btn" for="file">I have a history file</label>
@@ -341,6 +348,35 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
     <ol class="chips" id="chips"></ol>
     <p class="replay-note" id="replay-note"></p>
+  </section>
+
+  <section class="section" id="friends">
+    <div class="section-head">
+      <span class="eyebrow">Synastry</span>
+      <h2>Compare with a friend</h2>
+      <p>Send a friend a link to your chart. They see it straight away, and once they've cast theirs, the two line up side by side: the signs you share, the letters you lean on, and when you each play.</p>
+    </div>
+    <div class="friends">
+      <div class="method">
+        <h3>Share yours</h3>
+        <p>The link holds a summary of your chart, not your word lists, and goes only where you send it.</p>
+        <button type="button" class="btn primary needs-data share-open">Share my chart</button>
+        <a class="btn no-data" href="#cast">Cast your chart first</a>
+      </div>
+      <form class="method" id="fr-paste">
+        <h3>Open a friend's</h3>
+        <label for="fr-link">Paste the link they sent you.</label>
+        <div class="paste-row">
+          <input type="text" id="fr-link" inputmode="url" autocomplete="off" spellcheck="false" placeholder="vallandingham.me/hive-horoscope/#c=…">
+          <button type="submit">Compare</button>
+        </div>
+        <p class="cmp-note" id="fr-msg" role="status"></p>
+        <div class="actions" id="fr-saved" hidden>
+          <button type="button" id="fr-show"></button>
+          <button type="button" id="fr-forget">Forget their chart</button>
+        </div>
+      </form>
+    </div>
   </section>
 
   <section class="section" id="cast">
@@ -875,9 +911,12 @@ function synastry(me, them) {
   return bits.join(" ");
 }
 function renderCompare() {
-  document.body.toggleAttribute("data-compare", !!FRIEND);
+  const showing = !!FRIEND && !store.get("compare-off");
+  document.body.toggleAttribute("data-compare", showing);
   document.querySelectorAll(".forget").forEach((b) => (b.hidden = !store.get("me")));
-  if (!FRIEND) return;
+  $("#fr-saved").hidden = !FRIEND || showing;
+  if (FRIEND) $("#fr-show").textContent = `Show ${FRIEND.name || "your friend"}'s chart again`;
+  if (!showing) return;
   const T = FRIEND.name || "Your friend", short = T.length > 10 ? `${T.slice(0, 9)}…` : T;
   $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s chart`;
   $("#cmp-lede").textContent = synastry(ME, FRIEND);
@@ -1104,12 +1143,13 @@ async function shareLink() {
   if (!$("#share-time").checked) { delete S.hours; delete S.days; }
   return `${here}#c=${await packSummary(S)}`;
 }
-$("#share-open").addEventListener("click", () => {
+const openShare = () => {
   $("#share-name").value = store.get("name") || "";
   $("#share-note").textContent = "";
   $("#share-native").hidden = !navigator.share;
   shareDlg.showModal();
-});
+};
+document.querySelectorAll(".share-open").forEach((b) => b.addEventListener("click", openShare));
 $("#share-copy").addEventListener("click", async () => {
   const link = await shareLink();
   const ok = () => ($("#share-note").textContent = "Link copied. When a friend opens it, they see your chart, and once they've cast theirs, the two side by side.");
@@ -1118,7 +1158,25 @@ $("#share-copy").addEventListener("click", async () => {
 $("#share-native").addEventListener("click", async () => {
   try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee chart with mine.", url: await shareLink() }); } catch {}
 });
-$("#cmp-clear").addEventListener("click", () => { FRIEND = null; store.set("friend", null); renderCompare(); });
+const showCompare = () => { store.set("compare-off", null); renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
+$("#cmp-clear").addEventListener("click", () => { store.set("compare-off", true); renderCompare(); });
+$("#fr-show").addEventListener("click", showCompare);
+$("#fr-forget").addEventListener("click", () => { FRIEND = null; store.set("friend", null); store.set("compare-off", null); renderCompare(); });
+// Accepts a whole share link or just its #c=… part.
+async function openFriendCode(code) {
+  const S = await unpackSummary(code).catch(() => null);
+  if (!S) return false;
+  FRIEND = S; store.set("friend", S);
+  showCompare();
+  return true;
+}
+$("#fr-paste").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const m = $("#fr-link").value.trim().match(/#c=([A-Za-z0-9_-]{2,8000})/);
+  const ok = m && (await openFriendCode(m[1]));
+  $("#fr-msg").textContent = ok ? "" : "That doesn't look like a Hive Horoscope share link. Copy the whole link and try again.";
+  if (ok) $("#fr-link").value = "";
+});
 document.querySelectorAll(".forget").forEach((b) => b.addEventListener("click", () => {
   store.set("me", null); store.set("name", null);
   if (document.body.dataset.state !== "loaded") ME = null;
@@ -1130,9 +1188,7 @@ ME = cleanSummary(store.get("me"));
 FRIEND = cleanSummary(store.get("friend"));
 if (shareHash) {
   history.replaceState(null, "", location.pathname + location.search);
-  unpackSummary(shareHash[1])
-    .then((S) => { if (!S) throw new Error("bad summary"); FRIEND = S; store.set("friend", S); renderCompare(); window.scrollTo({ top: 0 }); })
-    .catch(() => setStatus("That share link didn't work. Ask for a fresh one.", true));
+  openFriendCode(shareHash[1]).then((ok) => { if (!ok) setStatus("That share link didn't work. Ask for a fresh one.", true); });
 }
 renderCompare();
 
