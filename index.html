@@ -164,6 +164,14 @@ dialog::backdrop { background: rgba(20, 18, 28, 0.45); }
 .share-form input[type="text"] { font: 1rem var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
 .share-form input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--plum); }
 .share-form .share-note { color: var(--ink); }
+.share-form input[type="radio"] { width: 18px; height: 18px; accent-color: var(--plum); }
+.share-mode { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.share-mode legend { font-weight: 500; padding: 0; margin-bottom: 8px; }
+/* Banner when the page shows a friend's results or your saved summary instead of a loaded history. */
+.viewing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; background: var(--honey-soft); border-radius: 14px; padding: 14px 18px; }
+.viewing p { color: var(--ink); font-weight: 500; }
+body:not([data-mine]) .needs-mine { display: none; }
+body[data-mine] .no-mine { display: none; }
 
 /* Vital numbers */
 .vitals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
@@ -290,10 +298,19 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     <div class="source">
       <span class="who" id="who">Loading…</span>
       <label class="btn primary" for="file">Load your history</label>
-      <a class="btn no-data" href="#cast">How to get yours</a>
+      <a class="btn no-mine" href="#cast">How to get yours</a>
       <a class="btn" href="#friends">Compare with a friend</a>
     </div>
   </header>
+
+  <div class="viewing" id="viewing" hidden>
+    <p id="viewing-text"></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="view-compare">Compare with mine</button>
+      <a class="btn primary" id="view-cast" href="#cast">Load your history to compare</a>
+      <button type="button" id="view-mine">Back to my results</button>
+    </div>
+  </div>
 
   <section class="section compare" id="compare" aria-labelledby="cmp-title">
     <div class="section-head">
@@ -335,6 +352,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
     <div class="actions">
       <a class="btn primary" id="cmp-cast" href="#cast">Load my history to compare</a>
+      <button type="button" id="cmp-view"></button>
       <button type="button" id="cmp-clear">Stop comparing</button>
       <button type="button" class="forget">Forget my saved results</button>
     </div>
@@ -393,7 +411,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
   </section>
 
-  <section class="section needs-data">
+  <section class="section needs-data" id="replay">
     <div class="section-head">
       <h2>Review a specific day's game</h2>
       <p>Pick a day to see the words you found, in the order you found them.</p>
@@ -465,14 +483,17 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
   <section class="section" id="friends">
     <div class="section-head">
       <h2>Compare with a friend</h2>
-      <p>Send a friend a link to your results. Once they've loaded their own history, you'll see the two side by side: the signs you share, your favorite letters, when you each play, and who found more words on the days you both played.</p>
+      <p>Send a friend a link to your results, or invite them to compare. Once you've both loaded your history, you'll see the two side by side: the signs you share, your favorite letters, when you each play, and who found more words on the days you both played.</p>
     </div>
     <div class="friends">
       <div class="method">
         <h3>Share yours</h3>
         <p>The link holds a summary of your stats, not the words you found. It isn't stored anywhere; only the people you send it to can see it.</p>
-        <button type="button" class="btn primary needs-data share-open">Share my results</button>
-        <a class="btn no-data" href="#cast">Load your history first</a>
+        <div class="actions needs-mine">
+          <button type="button" class="btn primary share-open" data-open="view">Share my results</button>
+          <button type="button" class="btn share-open" data-open="compare">Invite a friend to compare</button>
+        </div>
+        <a class="btn no-mine" href="#cast">Load your history first</a>
       </div>
       <form class="method" id="fr-paste">
         <h3>Open a friend's</h3>
@@ -484,6 +505,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
         <p class="cmp-note" id="fr-msg" role="status"></p>
         <div class="actions" id="fr-saved" hidden>
           <button type="button" id="fr-show"></button>
+          <button type="button" id="fr-view"></button>
           <button type="button" id="fr-forget">Forget their results</button>
         </div>
       </form>
@@ -492,7 +514,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 
   <footer>
     <p>Readings come from your saved games: the words you found, in the order you found them, and when each game was last saved. Times use this device's time zone.</p>
-    <p>When you load your own history, a summary is saved in this browser so you can compare with friends later. <button type="button" class="forget">Forget my saved results</button></p>
+    <p>When you load your own history, a summary is saved in this browser, so your results are here when you come back and you can compare with friends later. <button type="button" class="forget">Forget my saved results</button></p>
     <p>Pangrams are spotted as words that use seven different letters. The full answer lists for older puzzles aren't included, so words you missed aren't counted yet.</p>
   </footer>
 </div>
@@ -500,6 +522,11 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
   <form method="dialog" class="share-form">
     <h3 id="share-title">Share your results</h3>
     <p>The link holds a summary: your signs, totals, word lengths, favorite letters, and your most-found and longest words. Not the full list of words you found. It isn't stored anywhere; only the people you send it to can see it.</p>
+    <fieldset class="share-mode">
+      <legend>When they open the link</legend>
+      <label class="check"><input type="radio" name="share-open" value="view" checked> Show my results</label>
+      <label class="check"><input type="radio" name="share-open" value="compare"> Compare their results with mine</label>
+    </fieldset>
     <label>Your name <input type="text" id="share-name" maxlength="30" autocomplete="nickname" placeholder="So friends know it's you"></label>
     <label class="check"><input type="checkbox" id="share-time" checked> Include when you play (hours and days)</label>
     <label class="check"><input type="checkbox" id="share-log" checked> Include day-by-day results (which puzzles you played, words found, rank)</label>
@@ -760,8 +787,8 @@ function rulingDay(A) {
 }
 function restingRank(A) {
   const top = Object.entries(A.ranks).sort((a, b) => b[1] - a[1])[0] || ["Unranked", 0];
-  const genius = (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
-  return { name: top[0], body: `You usually stop around ${A.medianPerGame} words, and ${top[0]} is the rank you most often leave on (${top[1]} games). You've reached Genius ${genius} ${genius === 1 ? "time" : "times"}.` };
+  const genius = A.genius ?? (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
+  return { name: top[0], body: `You usually stop around ${A.medianPerGame} words, and ${top[0]} is the rank you most often leave on${top[1] ? ` (${top[1]} games)` : ""}. You've reached Genius ${genius} ${genius === 1 ? "time" : "times"}.` };
 }
 function totem(A) {
   const [w, c] = A.topWords[0] || ["—", 0];
@@ -813,7 +840,7 @@ function elementMini(A, name) {
 // Where pangrams land in your word lists: one faint dot per game, the average as a marker.
 function pangramMini(A) {
   const svg = mini("Where in your list the pangram turns up");
-  if (!A.pgPosList.length) { miniText(svg, MW / 2, 30, "No pangrams yet"); return svg; }
+  if (!A.pgGames) { miniText(svg, MW / 2, 30, "No pangrams yet"); return svg; }
   const x0 = 6, x1 = MW - 6, X = (p) => x0 + p * (x1 - x0), y = 22;
   svgEl("line", { x1: x0, x2: x1, y1: y, y2: y, class: "track" }, svg);
   for (const t of [1 / 3, 2 / 3]) svgEl("line", { x1: X(t), x2: X(t), y1: y - 12, y2: y + 12, class: "tick" }, svg);
@@ -1028,6 +1055,7 @@ function cleanSummary(S) {
   };
   const hours = nums(S.hours, 24), days = nums(S.days, 7);
   if (hours && days) Object.assign(out, { hours, days });
+  if (S.open === "view") out.open = "view"; // links without it (the older ones) open as a comparison
   if (Array.isArray(S.log) && S.log.length % 4 === 0 && S.log.length <= 4 * 6000) {
     const log = []; let day = 0, prev = 0;
     for (let i = 0; i < S.log.length; i += 4) {
@@ -1049,6 +1077,21 @@ function summaryToA(S) {
     ranks: { [S.rank]: 1 }, medianPerGame: S.wpg, topWords: [S.totem], longest: [S.crown],
   };
 }
+// Enough of an analysis, rebuilt from a summary, to draw the results page (no word lists, so no replay).
+function summaryA(S) {
+  const A = summaryToA(S), log = logEntries(S);
+  const iso = (day) => new Date(day * 864e5).toISOString().slice(0, 10);
+  if (log.length) {
+    A.played = log.map((e) => ({ id: String(e.id), date: iso(e.day), ts: e.day * 86400 + 43200, words: { length: e.n }, rank: RANKS[e.r - 1] || "" }));
+    A.ranks = {}; for (const g of A.played) if (g.rank) A.ranks[g.rank] = (A.ranks[g.rank] || 0) + 1;
+  } else A.ranks = { [S.rank]: 0 };
+  return Object.assign(A, {
+    fromSummary: true, hasLog: log.length > 0, noTime: !S.hours, gameCount: S.games, since: S.since, genius: S.genius,
+    letters: [...S.hive].map((l, i) => [l, S.hiveShare[i]]), letterTotal: 100,
+    n: S.words, pgCount: S.pg, pgPosList: [], empty: null,
+    lenHist: Object.fromEntries(S.len.map((v, i) => [i + 4, v])), posAvg: S.pos.map((avg, i) => ({ i, avg, n: 0 })),
+  });
+}
 const b64u = {
   enc: (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
   dec: (str) => Uint8Array.from(atob(str.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
@@ -1065,7 +1108,7 @@ async function unpackSummary(str) {
   return cleanSummary(JSON.parse(new TextDecoder().decode(raw)));
 }
 
-let ME = null, FRIEND = null, COMPARING = false, CAL_VIEW = matchMedia("(max-width: 720px)").matches ? "both" : "year";
+let ME = null, FRIEND = null, OWN = null, COMPARING = false, CAL_VIEW = matchMedia("(max-width: 720px)").matches ? "both" : "year";
 // Pair the two logs by puzzle ID; anything left over pairs up by date. One cell per day.
 function headToHead(me, them) {
   const a = logEntries(me), b = logEntries(them), bById = new Map(b.map((e) => [e.id, e])), used = new Set(), cells = [], loneA = [];
@@ -1175,11 +1218,18 @@ function synastry(me, them) {
 }
 const shortName = (T) => (T.length > 10 ? `${T.slice(0, 9)}…` : T);
 function renderCompare() {
-  const showing = !!FRIEND && COMPARING;
+  const showing = !!FRIEND && !!ME && COMPARING;
   document.body.toggleAttribute("data-compare", showing);
+  document.body.toggleAttribute("data-mine", !!ME);
   document.querySelectorAll(".forget").forEach((b) => (b.hidden = !store.get("me")));
   $("#fr-saved").hidden = !FRIEND || showing;
-  if (FRIEND) $("#fr-show").textContent = `Show ${FRIEND.name || "your friend"}'s results again`;
+  if (FRIEND) {
+    const n = FRIEND.name || "your friend";
+    $("#fr-show").textContent = `Compare with ${n} again`;
+    $("#fr-show").hidden = !ME;
+    $("#fr-view").textContent = `See ${n}'s results`;
+    $("#cmp-view").textContent = `See ${n}'s full results`;
+  }
   if (!showing) return;
   const T = FRIEND.name || "Your friend", short = shortName(T);
   $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s results`;
@@ -1240,26 +1290,57 @@ function renderCompare() {
 let STATE = null;
 function render(games, label, mine) {
   const A = analyze(games);
-  STATE = A;
   if (!A.played.length) { setStatus("That file has no played games in it.", true); return; }
-  document.body.dataset.state = "loaded";
+  OWN = { A, label };
   ME = summarize(A, store.get("name") || "");
   if (mine) store.set("me", ME);
+  // The sample loading in the background shouldn't replace a friend's results someone is looking at.
+  if (mine || document.body.dataset.view !== "friend") showOwn(); else renderCompare();
+}
+// The main sections show your history loaded this visit, else the summary saved from a past visit.
+function showOwn() {
+  if (OWN) paint(OWN.A, OWN.label);
+  else if (ME) paint(summaryA(ME), "Your saved results", "saved");
   renderCompare();
-  const first = A.played[0], last = A.played[A.played.length - 1];
-  setStatus(`${label} · ${fmtN(A.played.length)} games · ${fmtDate(first.date, { month: "short", year: "numeric" })} to ${fmtDate(last.date, { month: "short", year: "numeric" })}`);
+}
+function viewFriend() {
+  COMPARING = false;
+  paint(summaryA(FRIEND), `${FRIEND.name || "A friend"}'s results`, "friend");
+  renderCompare();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+// kind: undefined for a loaded history, "saved" for your own summary, "friend" for a share link.
+function paint(A, label, kind) {
+  document.body.dataset.state = "loaded";
+  if (kind) document.body.dataset.view = kind; else delete document.body.dataset.view;
+  if (!kind) STATE = A;
+  $("#replay").hidden = !!kind;
+  $("#viewing").hidden = !kind;
+  if (kind === "friend") {
+    $("#viewing-text").textContent = `You're looking at ${FRIEND.name || "a friend"}'s results.`;
+    $("#view-compare").hidden = $("#view-mine").hidden = !ME;
+    $("#view-cast").hidden = !!ME;
+  } else if (kind === "saved") {
+    $("#viewing-text").textContent = "This is the summary saved from your last visit. Load your history again to replay single games.";
+    $("#view-compare").hidden = $("#view-mine").hidden = $("#view-cast").hidden = true;
+  }
+  const span = A.played[0]?.date
+    ? `${fmtDate(A.played[0].date, { month: "short", year: "numeric" })} to ${fmtDate(A.played[A.played.length - 1].date, { month: "short", year: "numeric" })}`
+    : A.since ? `since ${fmtDate(`${A.since}-15`, { month: "short", year: "numeric" })}` : "";
+  setStatus([label, `${fmtN(A.gameCount ?? A.played.length)} games`, span].filter(Boolean).join(" · "));
 
   drawHive(A);
   const signs = $("#signs"); signs.innerHTML = "";
-  for (const s of [sunSign(A), risingSign(A), moonSign(A)]) {
+  const sun = A.noTime ? { glyph: "☉", kicker: "Sun · when you play", name: "Not shared", body: "Playing times weren't included in this link." } : sunSign(A);
+  for (const s of [sun, risingSign(A), moonSign(A)]) {
     const box = el("div", "sign");
     const g = el("div", "glyph", s.glyph); g.setAttribute("aria-hidden", "true");
     box.append(g, el("span", "eyebrow", s.kicker), el("h2", null, s.name), el("p", null, s.body));
     signs.append(box);
   }
 
-  const genius = (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
-  const vit = [["Games played", A.played.length], ["Words found", A.n], ["Words per game", A.medianPerGame], ["Pangrams found", A.pgCount], ["Genius days", genius], ["Opened, not played", A.empty]];
+  const genius = A.genius ?? (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
+  const vit = [["Games played", A.gameCount ?? A.played.length], ["Words found", A.n], ["Words per game", A.medianPerGame], ["Pangrams found", A.pgCount], ["Genius days", genius], ["Opened, not played", A.empty]].filter(([, v]) => v != null);
   const dl = $("#vitals"); dl.innerHTML = "";
   for (const [k, v] of vit) { const d = el("div"); d.append(el("dt", null, k), el("dd", null, fmtN(v))); dl.append(d); }
 
@@ -1270,14 +1351,17 @@ function render(games, label, mine) {
     houses.append(c);
   };
   const e = element(A), p = pangramHouse(A), rd = rulingDay(A), rr = restingRank(A), t = totem(A), cr = crown(A);
-  add("Element", e.name, e.body, elementMini(A, e.name)); add("Pangrams", p.name, p.body, pangramMini(A)); add("Busiest day", rd.name, rd.body, dayMini(A));
-  add("Usual finish", rr.name, rr.body, rankMini(A, rr.name)); add("Most-found word", t.word, t.body, totemMini(A), true); add("Longest word", cr.word, cr.body, crownMini(A, cr.word), true);
+  add("Element", e.name, e.body, elementMini(A, e.name)); add("Pangrams", p.name, p.body, pangramMini(A));
+  if (A.noTime) add("Busiest day", "Not shared", "Playing days weren't included in this link.", mini("Not shared")); else add("Busiest day", rd.name, rd.body, dayMini(A));
+  add("Usual finish", rr.name, rr.body, A.fromSummary && !A.hasLog ? mini("Not shared") : rankMini(A, rr.name)); add("Most-found word", t.word, t.body, totemMini(A), true); add("Longest word", cr.word, cr.body, crownMini(A, cr.word), true);
 
   const hl = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
-  const tot = A.played.length;
+  const tot = A.gameCount ?? A.played.length;
+  if (A.noTime) { $("#c-hour").textContent = ""; $("#cap-hour").textContent = "Playing times weren't included in this link."; } else {
   barChart($("#c-hour"), A.hours.map((v, h) => ({ label: hl(h), value: v, tip: `${hl(h)}–${hl((h + 1) % 24)}: ${v} ${v === 1 ? "game" : "games"}` })), { every: 3 });
   const peak = A.hours.indexOf(Math.max(...A.hours));
   $("#cap-hour").textContent = `Busiest hour: ${hl(peak)} to ${hl((peak + 1) % 24)}, with ${A.hours[peak]} of ${tot} games (${pct(A.hours[peak] / tot)}%). Each game counts once, at the time of its last word.`;
+  }
 
   const lenData = [];
   for (let k = 4; k <= 12; k++) { const v = A.lenHist[k] || 0; lenData.push({ label: k === 12 ? "12+" : String(k), value: v, tip: `${k === 12 ? "12+" : k} letters: ${fmtN(v)} words (${pct(v / (A.n || 1))}%)` }); }
@@ -1285,14 +1369,16 @@ function render(games, label, mine) {
   $("#cap-len").textContent = `Four-letter words are ${pct(A.fourShare)}% of everything you've found. Seven letters or more: ${pct(A.longShare)}%.`;
 
   if (A.posAvg.length >= 2) {
-    lineChart($("#c-pos"), A.posAvg.map((q) => ({ x: q.i + 1, y: q.avg, label: `#${q.i + 1}`, tip: `Word #${q.i + 1}: ${q.avg.toFixed(2)} letters on average (${q.n} games)` })));
+    lineChart($("#c-pos"), A.posAvg.map((q) => ({ x: q.i + 1, y: q.avg, label: `#${q.i + 1}`, tip: `Word #${q.i + 1}: ${q.avg.toFixed(2)} letters on average${q.n ? ` (${q.n} games)` : ""}` })));
     const a = A.posAvg[0], b = A.posAvg[Math.min(9, A.posAvg.length - 1)];
     $("#cap-pos").textContent = `Your first word averages ${a.avg.toFixed(1)} letters. By word #${b.i + 1} it's ${b.avg.toFixed(1)}. Positions with fewer than 10 games are left out.`;
   } else { $("#c-pos").innerHTML = ""; $("#cap-pos").textContent = "Not enough games yet."; }
 
+  if (A.fromSummary && !A.hasLog) { $("#c-time").textContent = ""; $("#cap-time").textContent = "Day-by-day results weren't included in this link."; return; }
   timeChart($("#c-time"), A.played);
   const big = A.played.reduce((x, y) => (y.words.length > x.words.length ? y : x));
   $("#cap-time").textContent = `Your biggest game: ${big.words.length} words on ${fmtDate(big.date)}${big.rank ? ` (${big.rank})` : ""}.`;
+  if (kind) return;
 
   const sel = $("#game"); sel.innerHTML = "";
   [...A.played].reverse().forEach((g, i) => {
@@ -1424,11 +1510,14 @@ async function shareLink() {
   store.set("name", name);
   ME.name = name;
   const S = { ...ME, name };
+  if (shareMode() === "view") S.open = "view";
   if (!$("#share-time").checked) { delete S.hours; delete S.days; }
   if (!$("#share-log").checked) delete S.log;
   return `${here}#c=${await packSummary(S)}`;
 }
-const openShare = () => {
+const shareMode = () => shareDlg.querySelector('input[name="share-open"]:checked').value;
+const openShare = (e) => {
+  shareDlg.querySelector(`input[name="share-open"][value="${e.currentTarget.dataset.open || "view"}"]`).checked = true;
   $("#share-name").value = store.get("name") || "";
   $("#share-note").textContent = "";
   $("#share-native").hidden = !navigator.share;
@@ -1437,36 +1526,61 @@ const openShare = () => {
 document.querySelectorAll(".share-open").forEach((b) => b.addEventListener("click", openShare));
 $("#share-copy").addEventListener("click", async () => {
   const link = await shareLink();
-  const ok = () => ($("#share-note").textContent = "Link copied. Once your friend loads their own history, they'll see the two of you side by side.");
+  const ok = () => ($("#share-note").textContent = shareMode() === "view"
+    ? "Link copied. It opens to your results. If your friend has loaded their own history, they can compare from there."
+    : "Link copied. If your friend has loaded their own history, it opens the two of you side by side. If not, they'll see your results first.");
   try { await navigator.clipboard.writeText(link); ok(); } catch { window.prompt("Copy this link:", link); }
 });
 $("#share-native").addEventListener("click", async () => {
-  try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee habits with mine.", url: await shareLink() }); } catch {}
+  const text = shareMode() === "view" ? "My Spelling Bee habits, as a horoscope." : "Compare your Spelling Bee habits with mine.";
+  try { await navigator.share({ title: "My Hive Horoscope", text, url: await shareLink() }); } catch {}
 });
-const showCompare = () => { COMPARING = true; renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
+const showCompare = () => {
+  if (!ME) return viewFriend();
+  COMPARING = true;
+  if (document.body.dataset.view === "friend") showOwn(); else renderCompare();
+  $("#compare").scrollIntoView({ behavior: "smooth" });
+};
+$("#fr-view").addEventListener("click", viewFriend);
+$("#cmp-view").addEventListener("click", viewFriend);
+$("#view-compare").addEventListener("click", showCompare);
+$("#view-mine").addEventListener("click", () => { showOwn(); window.scrollTo({ top: 0, behavior: "smooth" }); });
 $("#cmp-clear").addEventListener("click", () => { COMPARING = false; renderCompare(); });
 $("#fr-show").addEventListener("click", showCompare);
 document.querySelectorAll("#cmp-h2h .seg button").forEach((b) => b.addEventListener("click", () => { CAL_VIEW = b.dataset.view; renderH2H(shortName(FRIEND.name || "Your friend")); }));
-$("#fr-forget").addEventListener("click", () => { FRIEND = null; COMPARING = false; store.set("friend", null); renderCompare(); });
-// Accepts a whole share link or just its #c=… part.
-async function openFriendCode(code) {
+$("#fr-forget").addEventListener("click", () => {
+  FRIEND = null; COMPARING = false; store.set("friend", null);
+  if (document.body.dataset.view === "friend") leaveSummary(); else renderCompare();
+});
+// Back to your own results if there are any, otherwise to the intro.
+function leaveSummary() {
+  if (OWN || ME) return showOwn();
+  delete document.body.dataset.view;
+  $("#viewing").hidden = true;
+  document.body.dataset.state = "empty";
+  setStatus("No history loaded yet.");
+  renderCompare();
+}
+// Accepts a whole share link or just its #c=… part. A link opens as the sender chose, unless asked to compare.
+async function openFriendCode(code, compare) {
   const S = await unpackSummary(code).catch(() => null);
   if (!S) return false;
   FRIEND = S; store.set("friend", S);
-  showCompare();
+  if (ME && (compare || S.open !== "view")) showCompare(); else viewFriend();
   return true;
 }
 $("#fr-paste").addEventListener("submit", async (e) => {
   e.preventDefault();
   const m = $("#fr-link").value.trim().match(/#c=([A-Za-z0-9_-]{2,8000})/);
-  const ok = m && (await openFriendCode(m[1]));
+  const ok = m && (await openFriendCode(m[1], true));
   $("#fr-msg").textContent = ok ? "" : "That doesn't look like a Hive Horoscope share link. Copy the whole link and try again.";
   if (ok) $("#fr-link").value = "";
 });
 document.querySelectorAll(".forget").forEach((b) => b.addEventListener("click", () => {
   store.set("me", null); store.set("name", null);
-  if (document.body.dataset.state !== "loaded") ME = null;
-  renderCompare();
+  if (OWN) return renderCompare();
+  ME = null; COMPARING = false;
+  if (document.body.dataset.view === "saved") leaveSummary(); else if (document.body.dataset.view === "friend") viewFriend(); else renderCompare();
 }));
 
 // A friend's chart comes from a share link, or from the last one opened in this browser.
@@ -1494,8 +1608,9 @@ if (fromNyt) {
   // Load the sample history if data/sample.json exists; otherwise show the empty state.
   fetch("data/sample.json")
     .then((r) => (r.ok ? r.json() : Promise.reject()))
-    .then((s) => { if (document.body.dataset.state !== "loaded") loadRaw(s, `Sample: ${s.label || "sample history"}`, false); })
+    .then((s) => { if (!OWN && !ME) loadRaw(s, `Sample: ${s.label || "sample history"}`, false); })
     .catch(() => showEmpty("No history loaded yet."));
+  if (ME) showOwn();
 }
 </script>
 
