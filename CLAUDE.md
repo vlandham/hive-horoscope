@@ -4,7 +4,10 @@ Personal project (Jim). A static, client-only web page that analyzes a person's 
 
 ## Layout
 - `index.html`: the whole app (HTML, CSS, JS in one file, no build step). Loads `data/sample.json` if present.
-- `export/export.js`: console script users run on nytimes.com to download their history. Also embedded in index.html (`#export-src`); keep the two in sync.
+- `export/export.js`: export script users run on nytimes.com (bookmarklet or console). Shows a progress panel, then opens the hosted page and hands the data over, or downloads it. Also embedded in index.html (`#export-src`); keep the two in sync. The page builds the bookmarklet from `#export-src` at runtime and swaps the hosted URL for its own when served elsewhere (e.g. localhost). Keep it ASCII and free of `</script`.
+- Hosting: GitHub Pages from `main` at https://vallandingham.me/hive-horoscope/ (custom domain comes from the vlandham.github.io user site). `.nojekyll` skips Jekyll.
+- Handoff: the export opens `<page>#from-nyt`; the page posts `{type:"hive-horoscope-ready"}` to `window.opener` (www.nytimes.com only) and accepts `{type:"spelling-bee-history", data}` only from that origin.
+- Page state lives on `body[data-state]`: loading, empty (intro shown) or loaded (`.needs-data` sections shown).
 - `data/sample.json`: Jim's history in compact form `{compact:1,label,games:[[puzzle_id, unix_ts, print_date, rank, [words...]]]}`. Gitignored by default.
 - `tools/quick_stats.py`: first-pass stats over a raw export file.
 
@@ -31,8 +34,6 @@ Personal project (Jim). A static, client-only web page that analyzes a person's 
 - Keep request rate slow.
 
 ## Next steps
-1. Bookmarklet: run the export on nytimes.com, then open the hosted page and hand the data over via `postMessage` (index.html already listens for `{type:"spelling-bee-history", data}`). Needs a stable hosted origin, e.g. GitHub Pages.
-2. Phone instructions (iOS Safari bookmarklet via editing a bookmark's URL; Android Chrome via typing the bookmark name).
-3. Themes: categorize found words (food, animals, etc.) via a word-category list or an LLM pass.
-4. "Words you missed": match print_date to an answer archive.
-5. Empty state for visitors with no sample loaded.
+1. Test the bookmarklet handoff end to end on desktop Chrome/Safari and on a phone (only tested against a mock page so far).
+2. Themes: categorize found words (food, animals, etc.) via a word-category list or an LLM pass.
+3. "Words you missed": match print_date to an answer archive.

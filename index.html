@@ -88,6 +88,17 @@ header { display: flex; flex-direction: column; gap: 14px; }
 .sign h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); }
 .sign p { max-width: 62ch; }
 
+/* Page state: loading, then empty (no sample and no file yet) or loaded. */
+body:not([data-state="loaded"]) .needs-data { display: none; }
+body:not([data-state="empty"]) .intro { display: none; }
+body[data-state="empty"] .source .btn { display: none; }
+.intro-text { display: flex; flex-direction: column; gap: 18px; max-width: 62ch; }
+.intro-text h2 { font-size: clamp(2rem, 4.6vw, 2.8rem); }
+.teaser { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.teaser li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 14px; align-items: center; }
+.teaser .glyph { grid-row: auto; width: 32px; height: 32px; font-size: 1rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
 /* Vital numbers */
 .vitals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .vitals div { padding: 16px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -138,7 +149,10 @@ select { font: 500 0.95rem var(--body); color: var(--ink); background: var(--sur
 
 /* Cast your own */
 .cast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: start; }
+.method { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; max-width: 60ch; }
+.steps .btn { margin-top: 6px; cursor: grab; }
+details .steps { margin-top: 12px; }
 .drop { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; border: 1.5px dashed var(--line); border-radius: 14px; padding: 22px; cursor: pointer; background: var(--surface); }
 .drop.over { border-color: var(--honey); background: var(--honey-soft); }
 .drop strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; }
@@ -172,7 +186,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 }
 </style>
 </head>
-<body>
+<body data-state="loading">
 
 
 <div class="wrap">
@@ -186,7 +200,29 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
   </header>
 
-  <section class="hero" aria-label="Your chart">
+  <section class="hero intro" aria-label="About Hive Horoscope">
+    <div class="hive-wrap">
+      <svg class="hive" id="intro-hive" viewBox="-124 -124 248 248" role="img" aria-label="A hive spelling HOROSCOPE"></svg>
+      <p class="hive-cap">HOROSCOPE is a pangram: seven letters, every one used.</p>
+    </div>
+    <div class="intro-text">
+      <span class="eyebrow">Your chart hasn't been cast yet</span>
+      <h2>What do your Spelling Bee games say about you?</h2>
+      <p>Hive Horoscope reads every Spelling Bee game you've saved: the words you found, the order you found them in, and when you played. Then it reads your chart.</p>
+      <ul class="teaser">
+        <li><span class="glyph" aria-hidden="true">☉</span><span><strong>Sun:</strong> the hour you come to the hive.</span></li>
+        <li><span class="glyph" aria-hidden="true">↑</span><span><strong>Rising:</strong> how you open a puzzle.</span></li>
+        <li><span class="glyph" aria-hidden="true">☾</span><span><strong>Moon:</strong> whether you mine one root or roam.</span></li>
+      </ul>
+      <p>Plus six houses, your totem and crown words, and a replay of any game, word by word.</p>
+      <div class="actions">
+        <a class="btn primary" href="#cast">Cast my chart</a>
+        <label class="btn" for="file">I have a history file</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero needs-data" aria-label="Your chart">
     <div class="hive-wrap">
       <svg class="hive" id="hive" viewBox="-124 -124 248 248" role="img" aria-label="Your seven most-used letters"></svg>
       <p class="hive-cap" id="hive-cap">Your seven most-used letters, the most common at the center.</p>
@@ -194,9 +230,9 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     <div class="signs" id="signs"></div>
   </section>
 
-  <dl class="vitals" id="vitals" aria-label="Vital numbers"></dl>
+  <dl class="vitals needs-data" id="vitals" aria-label="Vital numbers"></dl>
 
-  <section class="section">
+  <section class="section needs-data">
     <div class="section-head">
       <span class="eyebrow">The six houses</span>
       <h2>How you play, house by house</h2>
@@ -204,7 +240,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     <div class="houses" id="houses"></div>
   </section>
 
-  <section class="section">
+  <section class="section needs-data">
     <div class="section-head">
       <span class="eyebrow">Instruments</span>
       <h2>The readings behind the readings</h2>
@@ -218,7 +254,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
   </section>
 
-  <section class="section">
+  <section class="section needs-data">
     <div class="section-head">
       <span class="eyebrow">Replay</span>
       <h2>One game, in the order you found it</h2>
@@ -236,23 +272,41 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     <div class="section-head">
       <span class="eyebrow">Cast your own</span>
       <h2>Read your own hive</h2>
-      <p>Your history stays in your browser. This page reads the file and nothing is uploaded anywhere.</p>
+      <p>Your history comes from your own signed-in Spelling Bee tab, and this page reads it in your browser. Nothing is uploaded anywhere, and this page never sees your NYT password or cookies.</p>
     </div>
     <div class="cast">
-      <ol class="steps">
-        <li>On a computer, open the Spelling Bee at nytimes.com/puzzles/spelling-bee and sign in.</li>
-        <li>Open the browser's developer tools (Cmd+Opt+I on a Mac, F12 on Windows) and choose the Console tab.</li>
-        <li>Copy the export script below, paste it into the console and press Enter. It takes about ten minutes and downloads a file when it's done.</li>
-        <li>Drop that file here.</li>
-      </ol>
-      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="method">
+        <h3>With a bookmark</h3>
+        <ol class="steps">
+          <li>Drag this button to your bookmarks bar:<br><a class="btn primary" id="bm" href="#">Hive export</a></li>
+          <li>Open the Spelling Bee at nytimes.com/puzzles/spelling-bee in your browser and sign in.</li>
+          <li>Click the Hive export bookmark. A panel in the corner counts through your saved games. It takes about ten minutes; keep that tab open and in front.</li>
+          <li>When it's done, choose Open my Hive Horoscope. Your chart opens here.</li>
+        </ol>
+        <details id="phone-steps">
+          <summary>On a phone</summary>
+          <ol class="steps">
+            <li><button type="button" id="copy-bm">Copy the bookmark code</button></li>
+            <li><strong>iPhone or iPad (Safari):</strong> bookmark this page, then open Bookmarks, tap Edit, tap the new bookmark, rename it Hive export, and replace its address with the code you copied.</li>
+            <li><strong>Android (Chrome):</strong> bookmark this page with the star in the ⋮ menu, then edit the bookmark: rename it Hive export and replace its URL with the code you copied.</li>
+            <li>Open nytimes.com/puzzles/spelling-bee in the browser (not the Games app) and sign in. On iPhone, open Bookmarks and tap Hive export. On Android, type Hive export into the address bar and tap the bookmark in the suggestions.</li>
+            <li>Keep the tab open for about ten minutes, then tap Open my Hive Horoscope.</li>
+          </ol>
+        </details>
+      </div>
+      <div class="method">
         <label class="drop" id="drop" for="file">
           <strong>Drop your history file</strong>
-          <span>Or click to choose it. Accepts the .json file the export script downloads.</span>
+          <span>Or click to choose it. Accepts the .json file the export downloads.</span>
           <input class="vh" type="file" id="file" accept=".json,application/json">
         </label>
         <details>
-          <summary>Export script</summary>
+          <summary>Or paste a script into the console</summary>
+          <ol class="steps">
+            <li>On a computer, open nytimes.com/puzzles/spelling-bee and sign in.</li>
+            <li>Open the developer tools (Cmd+Opt+I on a Mac, F12 on Windows) and choose the Console tab.</li>
+            <li>Paste the script below and press Enter. The same panel appears as with the bookmark.</li>
+          </ol>
           <div class="code-wrap">
             <button type="button" id="copy">Copy script</button>
             <pre id="code" tabindex="0"></pre>
@@ -269,12 +323,16 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 </div>
 <div id="tip" role="tooltip" hidden></div>
 
-<script type="text/plain" id="export-src">// Spelling Bee history export
-// Run in the DevTools console on https://www.nytimes.com/puzzles/spelling-bee while signed in.
+<script type="text/plain" id="export-src">// Spelling Bee history export for Hive Horoscope
+// Run on https://www.nytimes.com/puzzles/spelling-bee while signed in, from the Hive Horoscope
+// bookmarklet or by pasting this into the DevTools console.
 // Read-only: only asks for your saved games. Never changes anything.
-// Downloads spelling-bee-history-YYYY-MM-DD.json when done.
-(async () => {
+// Shows a progress panel; when done, opens Hive Horoscope with your history or downloads it as a file.
+void (async () => {
+  const HIVE_URL = "https://vallandingham.me/hive-horoscope/";
   const ID_MIN = 1, ID_MAX = 32000, BATCH = 25, DELAY_MS = 300;
+  if (location.hostname !== "www.nytimes.com") { alert("Open the Spelling Bee on nytimes.com, sign in, then run this again."); return; }
+  if (document.getElementById("hive-export")) return;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const url = (ids) => `/svc/games/state/spelling_bee/latests?puzzle_ids=${ids.join(",")}`;
   const collect = (node, out = []) => {
@@ -285,28 +343,79 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     }
     return out;
   };
+
+  // Progress panel, in a shadow root so the NYT page styles don't reach it.
+  const host = document.createElement("div");
+  host.id = "hive-export";
+  host.style.cssText = "position:fixed;z-index:2147483647;right:16px;bottom:16px;left:16px;display:flex;justify-content:flex-end;pointer-events:none";
+  const root = host.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>
+    .p { pointer-events:auto; position:relative; width:340px; max-width:100%; box-sizing:border-box; padding:18px 18px 16px; border-radius:14px;
+      background:#1D1A2B; color:#ECE8F6; font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+    b { display:block; font-size:16px; margin-bottom:6px; padding-right:28px; }
+    p { margin:0 0 12px; color:#C9C3DB; }
+    .bar { height:6px; border-radius:3px; background:#34304A; overflow:hidden; }
+    .bar i { display:block; height:100%; width:0; background:#E6AA36; transition:width .3s; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .row[hidden] { display:none; }
+    button { font:600 14px system-ui,-apple-system,sans-serif; border-radius:999px; padding:9px 14px; cursor:pointer; border:1px solid #4A4563; background:transparent; color:#ECE8F6; }
+    button.main { background:#E6AA36; border-color:#E6AA36; color:#1D1A2B; }
+    .x { position:absolute; top:10px; right:10px; padding:2px 9px; font-size:18px; border:0; }
+  </style><div class="p" role="status"><b>Hive Horoscope export</b><p id="msg">Starting&hellip;</p><div class="bar"><i id="fill"></i></div>
+    <div class="row" id="row" hidden><button class="main" id="open">Open my Hive Horoscope</button><button id="save">Download file</button></div>
+    <button class="x" id="x" aria-label="Stop and close">&times;</button></div>`;
+  document.body.appendChild(host);
+  const $ = (id) => root.getElementById(id);
+  const say = (m) => { $("msg").textContent = m; };
+  let stopped = false;
+  $("x").onclick = () => { stopped = true; host.remove(); };
+
   const states = new Map();
   const total = Math.ceil((ID_MAX - ID_MIN + 1) / BATCH);
   let n = 0;
-  for (let lo = ID_MIN; lo <= ID_MAX; lo += BATCH) {
+  for (let lo = ID_MIN; lo <= ID_MAX && !stopped; lo += BATCH) {
     const ids = [];
     for (let id = lo; id < lo + BATCH && id <= ID_MAX; id++) ids.push(id);
     n++;
     try {
       const res = await fetch(url(ids), { credentials: "include" });
-      if (res.status === 429) { console.warn("Rate limited; waiting 30s"); await sleep(30000); lo -= BATCH; n--; continue; }
-      if (res.status === 401 || res.status === 403) { console.warn("Not signed in. Sign in and run again."); return; }
+      if (res.status === 429) { say("NYT asked us to slow down. Waiting 30 seconds\u2026"); await sleep(30000); lo -= BATCH; n--; continue; }
+      if (res.status === 401 || res.status === 403) { say("You're not signed in. Sign in to nytimes.com and run this again."); return; }
       if (res.ok) for (const s of collect(await res.json())) states.set(String(s.puzzle_id), s);
     } catch (e) { console.warn(`Error at ids ${ids[0]}-${ids[ids.length - 1]}`, e); }
-    if (n % 40 === 0) console.log(`${n}/${total} requests, ${states.size} games found`);
+    $("fill").style.width = `${(100 * n) / total}%`;
+    say(`Reading your saved games: ${Math.round((100 * n) / total)}%, ${states.size} found. Takes about ten minutes; keep this tab open and in front.`);
     await sleep(DELAY_MS);
   }
+  if (stopped) return;
+
   const output = { exported_at: new Date().toISOString(), puzzle_count: states.size, states: [...states.values()] };
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "application/json" }));
-  a.download = `spelling-bee-history-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
+  const played = output.states.filter((s) => s.game_data.answers.length).length;
   console.log(`Done: ${states.size} games exported.`);
+  if (!played) { say("No played games found. Make sure you're signed in to the account you play on, then run this again."); return; }
+  say(`Done: ${played} played games. Open them in Hive Horoscope, or download a copy to keep.`);
+  $("fill").style.width = "100%";
+  $("row").hidden = false;
+
+  $("save").onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "application/json" }));
+    a.download = `spelling-bee-history-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  // Hand the data to the Hive Horoscope tab once it says it's ready. Only that origin can receive it.
+  $("open").onclick = () => {
+    const origin = new URL(HIVE_URL).origin;
+    const w = window.open(`${HIVE_URL}#from-nyt`, "_blank");
+    if (!w) { say("Your browser blocked the new tab. Choose Download file, then drop the file on the Hive Horoscope page."); return; }
+    const onMsg = (e) => {
+      if (e.source !== w || e.origin !== origin || !e.data || e.data.type !== "hive-horoscope-ready") return;
+      w.postMessage({ type: "spelling-bee-history", data: output }, origin);
+      removeEventListener("message", onMsg);
+      say("Sent to Hive Horoscope. You can close this panel.");
+    };
+    addEventListener("message", onMsg);
+  };
 })();
 </script>
 
@@ -537,19 +646,23 @@ function timeChart(host, games) {
 }
 
 /* ---------- Hive ---------- */
-function drawHive(A) {
-  const svg = $("#hive"); svg.innerHTML = "";
-  const r = 46, d = Math.sqrt(3) * r, letters = A.letters.slice(0, 7);
+// cells: [{ letter, tip? }], center first.
+function paintHive(svg, cells) {
+  svg.innerHTML = "";
+  const r = 46, d = Math.sqrt(3) * r;
   const centers = [[0, 0]];
   for (let k = 0; k < 6; k++) { const a = ((-90 + 60 * k) * Math.PI) / 180; centers.push([d * Math.cos(a), d * Math.sin(a)]); }
   const hex = (cx, cy, rr) => Array.from({ length: 6 }, (_, k) => { const a = ((60 * k) * Math.PI) / 180; return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`; }).join(" ");
   centers.forEach(([cx, cy], i) => {
-    const L = letters[i]; if (!L) return;
-    const share = pct(L[1] / (A.letterTotal || 1));
-    const g = svgEl("g", { "data-tip": `${L[0].toUpperCase()}: ${share}% of the letters you've played` }, svg);
+    const c = cells[i]; if (!c) return;
+    const g = svgEl("g", c.tip ? { "data-tip": c.tip } : {}, svg);
     svgEl("polygon", { points: hex(cx, cy, r - 3), class: i ? "cell" : "cell center" }, g);
-    svgEl("text", { x: cx, y: cy + 2, class: i ? "" : "center" }, g).textContent = L[0].toUpperCase();
+    svgEl("text", { x: cx, y: cy + 2, class: i ? "" : "center" }, g).textContent = c.letter.toUpperCase();
   });
+}
+function drawHive(A) {
+  const letters = A.letters.slice(0, 7);
+  paintHive($("#hive"), letters.map(([l, c]) => ({ letter: l, tip: `${l.toUpperCase()}: ${pct(c / (A.letterTotal || 1))}% of the letters you've played` })));
   $("#hive-cap").textContent = letters.length ? `Your seven most-used letters, with ${letters[0][0].toUpperCase()} at the center.` : "";
 }
 
@@ -559,6 +672,7 @@ function render(games, label) {
   const A = analyze(games);
   STATE = A;
   if (!A.played.length) { setStatus("That file has no played games in it.", true); return; }
+  document.body.dataset.state = "loaded";
   const first = A.played[0], last = A.played[A.played.length - 1];
   setStatus(`${label} · ${fmtN(A.played.length)} games · ${fmtDate(first.date, { month: "short", year: "numeric" })} to ${fmtDate(last.date, { month: "short", year: "numeric" })}`);
 
@@ -645,6 +759,7 @@ function loadRaw(raw, label) {
     if (!games.length) { setStatus("No Spelling Bee games found in that file. Use the file the export script downloads.", true); return; }
     render(games, label);
   } catch (e) { setStatus("Couldn't read that file. Use the .json file the export script downloads.", true); }
+  if (document.body.dataset.state === "loading") document.body.dataset.state = "empty";
 }
 function readFile(file) {
   if (!file) return;
@@ -660,16 +775,41 @@ const drop = $("#drop");
 ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
 drop.addEventListener("drop", (e) => readFile(e.dataTransfer.files[0]));
 $("#game").addEventListener("change", renderReplay);
-window.addEventListener("message", (e) => { if (e.data && e.data.type === "spelling-bee-history" && e.data.data) loadRaw(e.data.data, "Your history"); });
+// Handoff from the export panel on nytimes.com: we say we're ready, it posts the history back.
+const NYT_ORIGINS = ["https://www.nytimes.com"];
+let handedOff = false;
+window.addEventListener("message", (e) => {
+  if (!NYT_ORIGINS.includes(e.origin) || !e.data || e.data.type !== "spelling-bee-history" || !e.data.data) return;
+  handedOff = true;
+  loadRaw(e.data.data, "Your history");
+});
+const fromNyt = location.hash === "#from-nyt" && window.opener;
+if (fromNyt) {
+  history.replaceState(null, "", location.pathname + location.search);
+  NYT_ORIGINS.forEach((o) => { try { window.opener.postMessage({ type: "hive-horoscope-ready" }, o); } catch {} });
+}
+
+// The export script points at the hosted page; when this copy is served elsewhere (e.g. localhost), point it here.
+const HOSTED_URL = "https://vallandingham.me/hive-horoscope/";
+const here = /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/index\.html$/, "") : HOSTED_URL;
+const exportSrc = $("#export-src").textContent.trim().replace(HOSTED_URL, here);
+const bookmarklet = "javascript:" + encodeURIComponent(exportSrc.replace(/^\s*\/\/.*\n/gm, ""));
+const bm = $("#bm");
+bm.href = bookmarklet;
+bm.addEventListener("click", (e) => { e.preventDefault(); bm.textContent = "Drag me to your bookmarks bar"; setTimeout(() => (bm.textContent = "Hive export"), 2200); });
 
 const code = $("#code");
-code.textContent = $("#export-src").textContent.trim();
-$("#copy").addEventListener("click", () => {
-  const btn = $("#copy");
-  const done = () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = "Copy script"), 1800); };
-  const fallback = () => { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Cmd+C"; };
-  try { navigator.clipboard.writeText(code.textContent).then(done, fallback); } catch { fallback(); }
-});
+code.textContent = exportSrc;
+function copyButton(btn, text, label) {
+  btn.addEventListener("click", () => {
+    const done = () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = label), 1800); };
+    const fallback = () => window.prompt("Copy this:", text);
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch { fallback(); }
+  });
+}
+copyButton($("#copy"), exportSrc, "Copy script");
+copyButton($("#copy-bm"), bookmarklet, "Copy the bookmark code");
+if (matchMedia("(pointer: coarse)").matches) $("#phone-steps").open = true;
 
 const tip = $("#tip");
 document.addEventListener("pointermove", (e) => {
@@ -684,11 +824,23 @@ document.addEventListener("pointermove", (e) => {
 });
 document.addEventListener("pointerleave", () => (tip.hidden = true));
 
-// Load the sample history if data/sample.json exists; otherwise wait for a file.
-fetch("data/sample.json")
-  .then((r) => (r.ok ? r.json() : Promise.reject()))
-  .then((s) => loadRaw(s, `Sample: ${s.label || "sample history"}`))
-  .catch(() => setStatus("Load your history file to cast your chart."));
+paintHive($("#intro-hive"), [..."ohrscpe"].map((letter) => ({ letter })));
+function showEmpty(msg, err) {
+  if (document.body.dataset.state === "loaded") return;
+  document.body.dataset.state = "empty";
+  setStatus(msg, err);
+}
+
+if (fromNyt) {
+  showEmpty("Receiving your history from the Spelling Bee tab…");
+  setTimeout(() => { if (!handedOff) showEmpty("Nothing arrived from the Spelling Bee tab. Choose Download file there, then drop the file below.", true); }, 8000);
+} else {
+  // Load the sample history if data/sample.json exists; otherwise show the empty state.
+  fetch("data/sample.json")
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((s) => { if (document.body.dataset.state !== "loaded") loadRaw(s, `Sample: ${s.label || "sample history"}`); })
+    .catch(() => showEmpty("No history loaded yet."));
+}
 </script>
 
 </body>
