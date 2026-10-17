@@ -32,6 +32,7 @@ Personal project (Jim). A static, client-only web page that analyzes a person's 
 - Replay hive: puzzle letters are inferred per game (`puzzleLetters()`): center = the one letter in every found word; unused letters show blank; no hive when the center is ambiguous (~20% of sample games, mostly short ones).
 - Page copy: plain language for first-time visitors. Astrology names stay on the readings themselves (Sun/Rising/Moon, sign names); UI labels, buttons and headings avoid jargon like "cast", "chart", "houses", "synastry".
 - Hive = 7 most-used letters.
+- House cards ("House I · Element" …) each end with a small figure (`elementMini`, `pangramMini`, `dayMini`, `rankMini`, `totemMini`, `crownMini`), all on one 240×56 viewBox pinned to the card bottom so they match in size and place.
 
 ## Constraints
 - Never ask users for their NYT cookie or credentials; the export must run in their own signed-in browser.
