@@ -949,7 +949,7 @@ async function unpackSummary(str) {
   return cleanSummary(JSON.parse(new TextDecoder().decode(raw)));
 }
 
-let ME = null, FRIEND = null, CAL_VIEW = matchMedia("(max-width: 720px)").matches ? "both" : "year";
+let ME = null, FRIEND = null, COMPARING = false, CAL_VIEW = matchMedia("(max-width: 720px)").matches ? "both" : "year";
 // Pair the two logs by puzzle ID; anything left over pairs up by date. One cell per day.
 function headToHead(me, them) {
   const a = logEntries(me), b = logEntries(them), bById = new Map(b.map((e) => [e.id, e])), used = new Set(), cells = [], loneA = [];
@@ -1059,7 +1059,7 @@ function synastry(me, them) {
 }
 const shortName = (T) => (T.length > 10 ? `${T.slice(0, 9)}…` : T);
 function renderCompare() {
-  const showing = !!FRIEND && !store.get("compare-off");
+  const showing = !!FRIEND && COMPARING;
   document.body.toggleAttribute("data-compare", showing);
   document.querySelectorAll(".forget").forEach((b) => (b.hidden = !store.get("me")));
   $("#fr-saved").hidden = !FRIEND || showing;
@@ -1308,11 +1308,11 @@ $("#share-copy").addEventListener("click", async () => {
 $("#share-native").addEventListener("click", async () => {
   try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee chart with mine.", url: await shareLink() }); } catch {}
 });
-const showCompare = () => { store.set("compare-off", null); renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
-$("#cmp-clear").addEventListener("click", () => { store.set("compare-off", true); renderCompare(); });
+const showCompare = () => { COMPARING = true; renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
+$("#cmp-clear").addEventListener("click", () => { COMPARING = false; renderCompare(); });
 $("#fr-show").addEventListener("click", showCompare);
 document.querySelectorAll("#cmp-h2h .seg button").forEach((b) => b.addEventListener("click", () => { CAL_VIEW = b.dataset.view; renderH2H(shortName(FRIEND.name || "Your friend")); }));
-$("#fr-forget").addEventListener("click", () => { FRIEND = null; store.set("friend", null); store.set("compare-off", null); renderCompare(); });
+$("#fr-forget").addEventListener("click", () => { FRIEND = null; COMPARING = false; store.set("friend", null); renderCompare(); });
 // Accepts a whole share link or just its #c=… part.
 async function openFriendCode(code) {
   const S = await unpackSummary(code).catch(() => null);
@@ -1335,8 +1335,10 @@ document.querySelectorAll(".forget").forEach((b) => b.addEventListener("click", 
 }));
 
 // A friend's chart comes from a share link, or from the last one opened in this browser.
+// A remembered friend waits in #friends ("Show … again") rather than opening on every visit.
 ME = cleanSummary(store.get("me"));
 FRIEND = cleanSummary(store.get("friend"));
+store.set("compare-off", null);
 if (shareHash) {
   history.replaceState(null, "", location.pathname + location.search);
   openFriendCode(shareHash[1]).then((ok) => { if (!ok) setStatus("That share link didn't work. Ask for a fresh one.", true); });
