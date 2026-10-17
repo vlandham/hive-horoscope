@@ -1,0 +1,4 @@
+# Personal Spelling Bee histories. Remove the data/ line if you want your sample published with the site.
+data/*.json
+!data/.gitkeep
+.DS_Store

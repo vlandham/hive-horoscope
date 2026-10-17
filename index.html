@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hive Horoscope</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an almanac page. The hive emblem sits beside three signs; then the vital numbers, six houses, four instruments (charts), a replay of any single game, and how to cast your own chart. */
+:root {
+  --bg: #F3F2F8;
+  --surface: #FFFFFF;
+  --ink: #1D1A2B;
+  --muted: #5F5975;
+  --line: #DAD6E6;
+  --honey: #B87708;
+  --honey-soft: #F6E6BF;
+  --honey-ink: #6B4500;
+  --plum: #5B3F8C;
+  --hover: rgba(91, 63, 140, 0.10);
+  --display: "Gloock", "Iowan Old Style", Georgia, serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
+    --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
+    --hover: rgba(181, 157, 232, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
+  --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
+  --hover: rgba(181, 157, 232, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-block: 36px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 64px;
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: 0.005em; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); line-height: 1; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.1rem); line-height: 1.15; }
+h3 { font-size: 1.25rem; line-height: 1.2; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.section { display: flex; flex-direction: column; gap: 20px; }
+.section-head { display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+.section-head p { color: var(--muted); }
+a { color: var(--plum); }
+button, .btn {
+  font: 500 0.95rem var(--body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+}
+button:hover, .btn:hover { border-color: var(--plum); }
+button:focus-visible, .btn:focus-visible, select:focus-visible, .drop:focus-within { outline: 2px solid var(--plum); outline-offset: 2px; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Header */
+header { display: flex; flex-direction: column; gap: 14px; }
+.source { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; color: var(--muted); }
+.source .who { font-family: var(--mono); font-size: 0.85rem; }
+.status-err { color: #B3261E; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status-err { color: #FF8A80; } }
+:root[data-theme="dark"] .status-err { color: #FF8A80; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 40px 56px; align-items: start; }
+.hive-wrap { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.hive { width: 100%; max-width: 280px; height: auto; }
+.hive .cell { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.hive .cell.center { fill: var(--honey); stroke: var(--honey); }
+.hive text { font-family: var(--display); font-size: 36px; fill: var(--ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.hive text.center { fill: #1D1A2B; }
+.hive-cap { font-size: 0.9rem; color: var(--muted); text-align: center; max-width: 30ch; }
+.signs { display: flex; flex-direction: column; gap: 28px; }
+.sign { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 16px; }
+.glyph { grid-row: span 3; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--honey); color: var(--honey); display: grid; place-items: center; font-size: 1.3rem; line-height: 1; }
+.sign h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); }
+.sign p { max-width: 62ch; }
+
+/* Vital numbers */
+.vitals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.vitals div { padding: 16px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vitals div + div { border-left: 1px solid var(--line); }
+.vitals dt { font-size: 0.8rem; color: var(--muted); }
+.vitals dd { margin: 0; font-family: var(--display); font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+/* Houses */
+.houses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.house { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.house h3 { font-size: 1.6rem; }
+.house p { color: var(--ink); font-size: 0.95rem; }
+.house .word { font-family: var(--mono); font-size: 1.35rem; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+
+/* Charts */
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 40px; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+figcaption { font-size: 0.9rem; color: var(--muted); }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { stroke: var(--muted); stroke-width: 1; }
+.chart .tick { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.chart .bar { fill: var(--honey); }
+.chart .line { fill: none; stroke: var(--honey); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dot { fill: var(--honey); stroke: var(--surface); stroke-width: 2; }
+.chart .sdot { fill: var(--honey); fill-opacity: 0.7; stroke: var(--bg); stroke-width: 1; }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .hit:hover { fill: var(--hover); }
+.chart circle.hit:hover { fill: var(--hover); }
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 0.82rem var(--body); padding: 6px 10px; border-radius: 8px; max-width: 260px; }
+
+/* Replay */
+.replay-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+select { font: 500 0.95rem var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.sw.pg { background: var(--honey); }
+.sw.ch { border: 1.5px dashed var(--plum); }
+.chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: baseline; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+.chip .n { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip .w { font-family: var(--mono); font-size: 1rem; }
+.chip.chain { border: 1.5px dashed var(--plum); }
+.chip.pangram { background: var(--honey); border-color: var(--honey); }
+.chip.pangram .w, .chip.pangram .n { color: #1D1A2B; }
+.replay-note { color: var(--muted); font-size: 0.9rem; }
+
+/* Cast your own */
+.cast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: start; }
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; max-width: 60ch; }
+.drop { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; border: 1.5px dashed var(--line); border-radius: 14px; padding: 22px; cursor: pointer; background: var(--surface); }
+.drop.over { border-color: var(--honey); background: var(--honey-soft); }
+.drop strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; }
+.drop span { color: var(--muted); font-size: 0.9rem; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+summary { cursor: pointer; font-weight: 600; }
+.code-wrap { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+pre { margin: 0; width: 100%; max-height: 320px; overflow: auto; background: var(--bg); border-radius: 10px; padding: 14px; font: 0.78rem/1.5 var(--mono); }
+footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; border-top: 1px solid var(--line); padding-top: 20px; }
+
+@media (max-width: 900px) {
+  .houses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vitals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .vitals div:nth-child(4) { border-left: 0; }
+  .vitals div:nth-child(n+4) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 720px) {
+  .hero, .charts, .cast { grid-template-columns: minmax(0, 1fr); }
+  .hive-wrap { max-width: 260px; margin: 0 auto; }
+}
+@media (max-width: 520px) {
+  .houses { grid-template-columns: minmax(0, 1fr); }
+  .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vitals div { border-left: 0 !important; border-top: 1px solid var(--line); }
+  .vitals div:nth-child(-n+2) { border-top: 0; }
+  .vitals div:nth-child(even) { border-left: 1px solid var(--line) !important; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chip { transition: transform 120ms ease; }
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Spelling Bee natal chart</span>
+    <h1>Hive Horoscope</h1>
+    <div class="source">
+      <span class="who" id="who">Loading…</span>
+      <label class="btn primary" for="file">Load your history</label>
+      <a class="btn" href="#cast">How to get yours</a>
+    </div>
+  </header>
+
+  <section class="hero" aria-label="Your chart">
+    <div class="hive-wrap">
+      <svg class="hive" id="hive" viewBox="-124 -124 248 248" role="img" aria-label="Your seven most-used letters"></svg>
+      <p class="hive-cap" id="hive-cap">Your seven most-used letters, the most common at the center.</p>
+    </div>
+    <div class="signs" id="signs"></div>
+  </section>
+
+  <dl class="vitals" id="vitals" aria-label="Vital numbers"></dl>
+
+  <section class="section">
+    <div class="section-head">
+      <span class="eyebrow">The six houses</span>
+      <h2>How you play, house by house</h2>
+    </div>
+    <div class="houses" id="houses"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <span class="eyebrow">Instruments</span>
+      <h2>The readings behind the readings</h2>
+      <p>Hover or tap a bar or point for its value.</p>
+    </div>
+    <div class="charts">
+      <figure><h3>When your games end</h3><div id="c-hour"></div><figcaption id="cap-hour"></figcaption></figure>
+      <figure><h3>Word length</h3><div id="c-len"></div><figcaption id="cap-len"></figcaption></figure>
+      <figure><h3>Average length by word order</h3><div id="c-pos"></div><figcaption id="cap-pos"></figcaption></figure>
+      <figure><h3>Words found per game</h3><div id="c-time"></div><figcaption id="cap-time"></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <span class="eyebrow">Replay</span>
+      <h2>One game, in the order you found it</h2>
+    </div>
+    <div class="replay-bar">
+      <label class="vh" for="game">Choose a game</label>
+      <select id="game"></select>
+      <div class="legend"><span><i class="sw pg"></i>Pangram</span><span><i class="sw ch"></i>Builds on the word before</span></div>
+    </div>
+    <ol class="chips" id="chips"></ol>
+    <p class="replay-note" id="replay-note"></p>
+  </section>
+
+  <section class="section" id="cast">
+    <div class="section-head">
+      <span class="eyebrow">Cast your own</span>
+      <h2>Read your own hive</h2>
+      <p>Your history stays in your browser. This page reads the file and nothing is uploaded anywhere.</p>
+    </div>
+    <div class="cast">
+      <ol class="steps">
+        <li>On a computer, open the Spelling Bee at nytimes.com/puzzles/spelling-bee and sign in.</li>
+        <li>Open the browser's developer tools (Cmd+Opt+I on a Mac, F12 on Windows) and choose the Console tab.</li>
+        <li>Copy the export script below, paste it into the console and press Enter. It takes about ten minutes and downloads a file when it's done.</li>
+        <li>Drop that file here.</li>
+      </ol>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <label class="drop" id="drop" for="file">
+          <strong>Drop your history file</strong>
+          <span>Or click to choose it. Accepts the .json file the export script downloads.</span>
+          <input class="vh" type="file" id="file" accept=".json,application/json">
+        </label>
+        <details>
+          <summary>Export script</summary>
+          <div class="code-wrap">
+            <button type="button" id="copy">Copy script</button>
+            <pre id="code" tabindex="0"></pre>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Readings come from your saved games: the words you found, in the order you found them, and when each game was last saved. Times use this device's time zone.</p>
+    <p>Pangrams are spotted as words that use seven different letters. The full answer lists for older puzzles aren't included, so words you missed aren't counted yet.</p>
+  </footer>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script type="text/plain" id="export-src">// Spelling Bee history export
+// Run in the DevTools console on https://www.nytimes.com/puzzles/spelling-bee while signed in.
+// Read-only: only asks for your saved games. Never changes anything.
+// Downloads spelling-bee-history-YYYY-MM-DD.json when done.
+(async () => {
+  const ID_MIN = 1, ID_MAX = 32000, BATCH = 25, DELAY_MS = 300;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const url = (ids) => `/svc/games/state/spelling_bee/latests?puzzle_ids=${ids.join(",")}`;
+  const collect = (node, out = []) => {
+    if (Array.isArray(node)) node.forEach((n) => collect(n, out));
+    else if (node && typeof node === "object") {
+      if (node.game_data && Array.isArray(node.game_data.answers)) out.push(node);
+      else Object.values(node).forEach((v) => collect(v, out));
+    }
+    return out;
+  };
+  const states = new Map();
+  const total = Math.ceil((ID_MAX - ID_MIN + 1) / BATCH);
+  let n = 0;
+  for (let lo = ID_MIN; lo <= ID_MAX; lo += BATCH) {
+    const ids = [];
+    for (let id = lo; id < lo + BATCH && id <= ID_MAX; id++) ids.push(id);
+    n++;
+    try {
+      const res = await fetch(url(ids), { credentials: "include" });
+      if (res.status === 429) { console.warn("Rate limited; waiting 30s"); await sleep(30000); lo -= BATCH; n--; continue; }
+      if (res.status === 401 || res.status === 403) { console.warn("Not signed in. Sign in and run again."); return; }
+      if (res.ok) for (const s of collect(await res.json())) states.set(String(s.puzzle_id), s);
+    } catch (e) { console.warn(`Error at ids ${ids[0]}-${ids[ids.length - 1]}`, e); }
+    if (n % 40 === 0) console.log(`${n}/${total} requests, ${states.size} games found`);
+    await sleep(DELAY_MS);
+  }
+  const output = { exported_at: new Date().toISOString(), puzzle_count: states.size, states: [...states.values()] };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: "application/json" }));
+  a.download = `spelling-bee-history-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  console.log(`Done: ${states.size} games exported.`);
+})();
+</script>
+
+<script>
+
+const $ = (s) => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const RANKS = ["Beginner", "Good Start", "Moving Up", "Good", "Solid", "Nice", "Great", "Amazing", "Genius", "Queen Bee"];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+const median = (a) => { if (!a.length) return 0; const b = [...a].sort((x, y) => x - y); const m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+const pct = (x) => Math.round(x * 100);
+const fmtN = (n) => n.toLocaleString();
+const isPangram = (w) => /^[a-z]+$/.test(w) && new Set(w).size === 7;
+const localISO = (ts) => { const d = new Date(ts * 1000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const fmtDate = (iso, opts = { month: "short", day: "numeric", year: "numeric" }) => new Date(iso + "T12:00:00").toLocaleDateString(undefined, opts);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const svgEl = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+/* ---------- Loading ---------- */
+function collect(node, out = []) {
+  if (Array.isArray(node)) node.forEach((n) => collect(n, out));
+  else if (node && typeof node === "object") {
+    if (node.game_data && Array.isArray(node.game_data.answers)) out.push(node);
+    else Object.values(node).forEach((v) => collect(v, out));
+  }
+  return out;
+}
+function normalize(raw) {
+  let list;
+  if (raw && raw.compact) {
+    list = raw.games.map(([id, ts, date, rank, words]) => ({ id: String(id), ts, date: date || localISO(ts), rank: rank || null, words: words.map((w) => String(w).toLowerCase()) }));
+  } else {
+    list = collect(raw).map((s) => {
+      const ts = Number(s.timestamp) || 0;
+      return { id: String(s.puzzle_id), ts, date: s.print_date || localISO(ts), rank: s.game_data.rank || null, words: s.game_data.answers.map((w) => String(w).toLowerCase()) };
+    });
+  }
+  const by = new Map();
+  for (const g of list) { const p = by.get(g.id); if (!p || g.ts > p.ts) by.set(g.id, g); }
+  return [...by.values()].sort((a, b) => a.ts - b.ts);
+}
+
+/* ---------- Analysis ---------- */
+function analyze(games) {
+  const played = games.filter((g) => g.words.length);
+  const A = { games, played, empty: games.length - played.length };
+  const words = played.flatMap((g) => g.words);
+  const n = words.length || 1;
+  const lens = words.map((w) => w.length);
+  A.n = words.length;
+  A.avgLen = mean(lens);
+  A.medianPerGame = median(played.map((g) => g.words.length));
+  A.hours = Array(24).fill(0);
+  A.days = Array(7).fill(0);
+  for (const g of played) { const d = new Date(g.ts * 1000); A.hours[d.getHours()]++; A.days[d.getDay()]++; }
+  A.lenHist = {};
+  for (const l of lens) { const k = Math.min(l, 12); A.lenHist[k] = (A.lenHist[k] || 0) + 1; }
+  A.firstAvg = mean(played.map((g) => g.words[0].length));
+
+  let pgGames = 0, pgFirst = 0, pgCount = 0; const pos = [];
+  for (const g of played) {
+    const idx = g.words.findIndex(isPangram);
+    if (idx >= 0) { pgGames++; if (idx === 0) pgFirst++; if (g.words.length > 1) pos.push(idx / (g.words.length - 1)); }
+    pgCount += g.words.filter(isPangram).length;
+  }
+  Object.assign(A, { pgGames, pgFirst, pgCount, pgPos: mean(pos) });
+
+  let pairs = 0, chains = 0, best = null;
+  for (const g of played) for (let i = 1; i < g.words.length; i++) {
+    const a = g.words[i - 1], b = g.words[i]; pairs++;
+    if (b.startsWith(a) || a.startsWith(b)) {
+      chains++;
+      if (b.startsWith(a) && b.length - a.length >= 1 && b.length - a.length <= 3 && (!best || a.length > best[0].length)) best = [a, b];
+    }
+  }
+  A.chainRate = pairs ? chains / pairs : 0;
+  A.chainEx = best;
+  A.ingShare = words.filter((w) => w.endsWith("ing")).length / n;
+  A.fourShare = lens.filter((l) => l === 4).length / n;
+  A.longShare = lens.filter((l) => l >= 7).length / n;
+  A.doubleShare = words.filter((w) => /(.)\1/.test(w)).length / n;
+
+  const lf = {}; for (const w of words) for (const c of w) lf[c] = (lf[c] || 0) + 1;
+  A.letters = Object.entries(lf).sort((a, b) => b[1] - a[1]);
+  A.letterTotal = A.letters.reduce((s, [, c]) => s + c, 0);
+  const wf = {}; for (const w of words) wf[w] = (wf[w] || 0) + 1;
+  A.topWords = Object.entries(wf).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  A.longest = [...new Set(words)].sort((a, b) => b.length - a.length || a.localeCompare(b));
+  A.ranks = {}; for (const g of played) { const r = g.rank || "Unranked"; A.ranks[r] = (A.ranks[r] || 0) + 1; }
+  A.posAvg = [];
+  for (let i = 0; i < 25; i++) {
+    const v = played.filter((g) => g.words.length > i).map((g) => g.words[i].length);
+    if (v.length >= 10) A.posAvg.push({ i, avg: mean(v), n: v.length });
+  }
+  return A;
+}
+
+/* ---------- Readings ---------- */
+const SUN = [
+  { from: 0, to: 4, name: "Night Moth", range: "midnight and 4am", text: "You come to the hive after everyone else has gone to bed, when the letters are the only thing still awake." },
+  { from: 4, to: 9, name: "Dawn Forager", range: "4 and 9am", text: "You take the puzzle with your first coffee, while your head is clear and the day hasn't started asking for things." },
+  { from: 9, to: 12, name: "Morning Scout", range: "9am and noon", text: "You fit the puzzle into the morning, a quick scouting run before the day fills up." },
+  { from: 12, to: 17, name: "Afternoon Drifter", range: "noon and 5pm", text: "The puzzle is your midday break, a few words between other things." },
+  { from: 17, to: 20, name: "Dusk Gatherer", range: "5 and 8pm", text: "You gather words in the early evening, somewhere between the end of work and dinner." },
+  { from: 20, to: 24, name: "Lamplight Hunter", range: "8pm and midnight", text: "You come to the hive when the day's work is done. The puzzle is how you wind down, and you tend to stop when the light does." },
+];
+function sunSign(A) {
+  const total = A.played.length || 1;
+  const counts = SUN.map((b) => A.hours.slice(b.from, b.to).reduce((x, y) => x + y, 0));
+  const order = counts.map((_, i) => i).sort((a, b) => counts[b] - counts[a]);
+  const top = SUN[order[0]], second = SUN[order[1]];
+  let body = `${pct(counts[order[0]] / total)}% of your games end between ${top.range}. ${top.text}`;
+  if (counts[order[1]] / total >= 0.15) body += ` There's a second you, the ${second.name}: ${pct(counts[order[1]] / total)}% of games end between ${second.range}.`;
+  return { glyph: "☉", kicker: "Sun · when you play", name: top.name, body };
+}
+function risingSign(A) {
+  const d = A.firstAvg - A.avgLen, f = A.firstAvg.toFixed(1), o = A.avgLen.toFixed(1);
+  let name, body;
+  if (d >= 0.5) { name = "The Big Swing"; body = `You open by going after something substantial. Your first word averages ${f} letters, longer than your usual ${o}.`; }
+  else if (d <= -0.25) { name = "The Warm-Up"; body = `You ease in. Your first word averages ${f} letters, compared with ${o} overall. You find something short to get the hive moving, then look for bigger words.`; }
+  else { name = "The Steady Start"; body = `Your first word is a typical word for you, ${f} letters against ${o} overall. You don't treat the opening as special. You just start.`; }
+  if (A.pgFirst) body += ` You've opened with a pangram ${A.pgFirst} ${A.pgFirst === 1 ? "time" : "times"}.`;
+  return { glyph: "↑", kicker: "Rising · how you open", name, body };
+}
+function moonSign(A) {
+  const r = A.chainRate, every = r ? Math.round(1 / r) : 0;
+  const ex = A.chainEx ? ` (${A.chainEx[0]} → ${A.chainEx[1]})` : "";
+  let name, body;
+  if (r >= 0.15) { name = "The Builder"; body = `Once you find a word, you mine it. In ${pct(r)}% of your moves, the next word extends or trims the one before${ex}.`; }
+  else if (r >= 0.07) { name = "The Tinkerer"; body = `Now and then a word sparks its own sequel. About 1 move in ${every} extends or trims the word you just found${ex}.`; }
+  else if (r > 0) { name = "The Roamer"; body = `You rarely stay on one root. Each word sends you somewhere new, and only about 1 move in ${every} builds on the word before.`; }
+  else { name = "The Roamer"; body = "You never stay on one root. Each word sends you somewhere new."; }
+  body += ` ${pct(A.ingShare)}% of your words end in -ing.`;
+  return { glyph: "☾", kicker: "Moon · how you build", name, body };
+}
+function element(A) {
+  if (A.longShare >= 0.2) return { name: "Fire", body: `Long words pull you in. ${pct(A.longShare)}% of what you find runs seven letters or more.` };
+  if (A.fourShare >= 0.5) return { name: "Earth", body: `Four-letter words make up ${pct(A.fourShare)}% of everything you find. You build your score on solid, common ground and let the long words come when they come.` };
+  if (A.doubleShare >= 0.4) return { name: "Water", body: `Doubled letters run through your lists. ${pct(A.doubleShare)}% of your words repeat a letter back to back.` };
+  return { name: "Air", body: `Your words spread evenly across lengths. Four-letter words are ${pct(A.fourShare)}% and seven-plus are ${pct(A.longShare)}%.` };
+}
+function pangramHouse(A) {
+  if (!A.pgGames) return { name: "Still waiting", body: "No pangram has turned up in your saved games yet." };
+  const p = A.pgPos;
+  const name = p < 0.34 ? "Early Seer" : p < 0.67 ? "Midgame Revelation" : "Late Bloomer";
+  return { name, body: `You found a pangram in ${pct(A.pgGames / A.played.length)}% of the games you played. When one arrives, it lands on average ${pct(p)}% of the way through your list.` };
+}
+function rulingDay(A) {
+  const o = A.days.map((_, i) => i).sort((a, b) => A.days[b] - A.days[a]);
+  return { name: DAYS[o[0]], body: `${DAYS[o[0]]} rules your hive with ${A.days[o[0]]} games. ${DAYS[o[6]]} is your quietest day, with ${A.days[o[6]]}.` };
+}
+function restingRank(A) {
+  const top = Object.entries(A.ranks).sort((a, b) => b[1] - a[1])[0] || ["Unranked", 0];
+  const genius = (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
+  return { name: top[0], body: `You usually stop around ${A.medianPerGame} words, and ${top[0]} is the rank you most often leave on (${top[1]} games). You've reached Genius ${genius} ${genius === 1 ? "time" : "times"}.` };
+}
+function totem(A) {
+  const [w, c] = A.topWords[0] || ["—", 0];
+  const rest = A.topWords.slice(1, 4).map(([x, k]) => `${x} (${k})`).join(", ");
+  return { word: w, body: `Found in ${c} different games, more than any other word.${rest ? ` Runners-up: ${rest}.` : ""}` };
+}
+function crown(A) {
+  const w = A.longest[0] || "—";
+  const rest = A.longest.slice(1, 4).join(", ");
+  return { word: w, body: `Your longest find, at ${w.length} letters.${rest ? ` Next longest: ${rest}.` : ""}` };
+}
+
+/* ---------- Charts ---------- */
+function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw || 1)); const x = raw / p; return (x <= 1 ? 1 : x <= 2 ? 2 : x <= 5 ? 5 : 10) * p; }
+function topRound(x, y, w, h, r) { r = Math.min(r, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+function frame(host) { host.innerHTML = ""; const W = 520, H = 230, m = { t: 14, r: 10, b: 28, l: 40 }; const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" }, host); return { svg, W, H, m, iw: W - m.l - m.r, ih: H - m.t - m.b }; }
+function yAxis(F, min, max, step, fmt = (v) => fmtN(v)) {
+  const { svg, m, iw, ih } = F;
+  for (let v = min; v <= max + 1e-9; v += step) {
+    const y = m.t + ih - (ih * (v - min)) / (max - min);
+    svgEl("line", { x1: m.l, x2: m.l + iw, y1: y, y2: y, class: "grid" }, svg);
+    svgEl("text", { x: m.l - 8, y: y + 4, class: "tick", "text-anchor": "end" }, svg).textContent = fmt(v);
+  }
+}
+function barChart(host, data, { every = 1 } = {}) {
+  const F = frame(host), { svg, H, m, iw, ih } = F;
+  const vmax = Math.max(1, ...data.map((d) => d.value)), step = niceStep(vmax / 4), max = Math.ceil(vmax / step) * step;
+  yAxis(F, 0, max, step);
+  const sw = iw / data.length, bw = Math.max(3, sw - 2);
+  data.forEach((d, i) => {
+    const x = m.l + i * sw + (sw - bw) / 2, h = (ih * d.value) / max, y = m.t + ih - h;
+    if (h > 0) svgEl("path", { d: topRound(x, y, bw, h, 4), class: "bar" }, svg);
+    if (i % every === 0) svgEl("text", { x: x + bw / 2, y: H - 8, class: "tick", "text-anchor": "middle" }, svg).textContent = d.label;
+  });
+  svgEl("line", { x1: m.l, x2: m.l + iw, y1: m.t + ih, y2: m.t + ih, class: "axis" }, svg);
+  data.forEach((d, i) => svgEl("rect", { x: m.l + i * sw, y: m.t, width: sw, height: ih, class: "hit", "data-tip": d.tip }, svg));
+}
+function lineChart(host, pts) {
+  const F = frame(host), { svg, H, m, iw, ih } = F;
+  const ys = pts.map((p) => p.y);
+  let step = niceStep((Math.max(...ys) - Math.min(...ys)) / 4 || 0.5);
+  let min = Math.floor(Math.min(...ys) / step) * step, max = Math.ceil(Math.max(...ys) / step) * step;
+  if (max === min) max = min + step;
+  yAxis(F, min, max, step, (v) => v.toFixed(step < 1 ? 1 : 0));
+  const x0 = pts[0].x, x1 = pts[pts.length - 1].x, pad = 10;
+  const X = (x) => m.l + pad + ((x - x0) / Math.max(1, x1 - x0)) * (iw - 2 * pad);
+  const Y = (y) => m.t + ih - (ih * (y - min)) / (max - min);
+  svgEl("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${X(p.x)},${Y(p.y)}`).join(""), class: "line" }, svg);
+  const every = Math.ceil(pts.length / 10);
+  pts.forEach((p, i) => {
+    svgEl("circle", { cx: X(p.x), cy: Y(p.y), r: 4, class: "dot" }, svg);
+    if (i % every === 0 || i === pts.length - 1) svgEl("text", { x: X(p.x), y: H - 8, class: "tick", "text-anchor": "middle" }, svg).textContent = p.label;
+  });
+  pts.forEach((p) => svgEl("circle", { cx: X(p.x), cy: Y(p.y), r: 12, class: "hit", "data-tip": p.tip }, svg));
+}
+function timeChart(host, games) {
+  const F = frame(host), { svg, H, m, iw, ih } = F;
+  const vmax = Math.max(1, ...games.map((g) => g.words.length)), step = niceStep(vmax / 4), max = Math.ceil(vmax / step) * step;
+  yAxis(F, 0, max, step);
+  const t0 = games[0].ts, t1 = games[games.length - 1].ts, pad = 6;
+  const X = (t) => m.l + pad + ((t - t0) / Math.max(1, t1 - t0)) * (iw - 2 * pad);
+  const Y = (v) => m.t + ih - (ih * v) / max;
+  const y0 = new Date(t0 * 1000).getFullYear(), y1 = new Date(t1 * 1000).getFullYear();
+  for (let y = y0 + 1; y <= y1; y++) {
+    const x = X(new Date(y, 0, 1).getTime() / 1000);
+    svgEl("line", { x1: x, x2: x, y1: m.t, y2: m.t + ih, class: "grid" }, svg);
+    svgEl("text", { x, y: H - 8, class: "tick", "text-anchor": "middle" }, svg).textContent = String(y);
+  }
+  svgEl("line", { x1: m.l, x2: m.l + iw, y1: m.t + ih, y2: m.t + ih, class: "axis" }, svg);
+  games.forEach((g) => svgEl("circle", { cx: X(g.ts), cy: Y(g.words.length), r: 3.5, class: "sdot" }, svg));
+  games.forEach((g) => svgEl("circle", { cx: X(g.ts), cy: Y(g.words.length), r: 7, class: "hit", "data-tip": `${fmtDate(g.date)}: ${g.words.length} words${g.rank ? `, ${g.rank}` : ""}` }, svg));
+}
+
+/* ---------- Hive ---------- */
+function drawHive(A) {
+  const svg = $("#hive"); svg.innerHTML = "";
+  const r = 46, d = Math.sqrt(3) * r, letters = A.letters.slice(0, 7);
+  const centers = [[0, 0]];
+  for (let k = 0; k < 6; k++) { const a = ((-90 + 60 * k) * Math.PI) / 180; centers.push([d * Math.cos(a), d * Math.sin(a)]); }
+  const hex = (cx, cy, rr) => Array.from({ length: 6 }, (_, k) => { const a = ((60 * k) * Math.PI) / 180; return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`; }).join(" ");
+  centers.forEach(([cx, cy], i) => {
+    const L = letters[i]; if (!L) return;
+    const share = pct(L[1] / (A.letterTotal || 1));
+    const g = svgEl("g", { "data-tip": `${L[0].toUpperCase()}: ${share}% of the letters you've played` }, svg);
+    svgEl("polygon", { points: hex(cx, cy, r - 3), class: i ? "cell" : "cell center" }, g);
+    svgEl("text", { x: cx, y: cy + 2, class: i ? "" : "center" }, g).textContent = L[0].toUpperCase();
+  });
+  $("#hive-cap").textContent = letters.length ? `Your seven most-used letters, with ${letters[0][0].toUpperCase()} at the center.` : "";
+}
+
+/* ---------- Render ---------- */
+let STATE = null;
+function render(games, label) {
+  const A = analyze(games);
+  STATE = A;
+  if (!A.played.length) { setStatus("That file has no played games in it.", true); return; }
+  const first = A.played[0], last = A.played[A.played.length - 1];
+  setStatus(`${label} · ${fmtN(A.played.length)} games · ${fmtDate(first.date, { month: "short", year: "numeric" })} to ${fmtDate(last.date, { month: "short", year: "numeric" })}`);
+
+  drawHive(A);
+  const signs = $("#signs"); signs.innerHTML = "";
+  for (const s of [sunSign(A), risingSign(A), moonSign(A)]) {
+    const box = el("div", "sign");
+    const g = el("div", "glyph", s.glyph); g.setAttribute("aria-hidden", "true");
+    box.append(g, el("span", "eyebrow", s.kicker), el("h2", null, s.name), el("p", null, s.body));
+    signs.append(box);
+  }
+
+  const genius = (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0);
+  const vit = [["Games played", A.played.length], ["Words found", A.n], ["Words per game", A.medianPerGame], ["Pangrams found", A.pgCount], ["Genius days", genius], ["Opened, not played", A.empty]];
+  const dl = $("#vitals"); dl.innerHTML = "";
+  for (const [k, v] of vit) { const d = el("div"); d.append(el("dt", null, k), el("dd", null, fmtN(v))); dl.append(d); }
+
+  const houses = $("#houses"); houses.innerHTML = "";
+  const add = (kicker, h, body, isWord) => {
+    const c = el("article", "house");
+    c.append(el("span", "eyebrow", kicker), isWord ? el("span", "word", h) : el("h3", null, h), el("p", null, body));
+    houses.append(c);
+  };
+  const e = element(A), p = pangramHouse(A), rd = rulingDay(A), rr = restingRank(A), t = totem(A), cr = crown(A);
+  add("Element", e.name, e.body); add("Pangram", p.name, p.body); add("Ruling day", rd.name, rd.body);
+  add("Resting rank", rr.name, rr.body); add("Totem word", t.word, t.body, true); add("Crown word", cr.word, cr.body, true);
+
+  const hl = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
+  const tot = A.played.length;
+  barChart($("#c-hour"), A.hours.map((v, h) => ({ label: hl(h), value: v, tip: `${hl(h)}–${hl((h + 1) % 24)}: ${v} ${v === 1 ? "game" : "games"}` })), { every: 3 });
+  const peak = A.hours.indexOf(Math.max(...A.hours));
+  $("#cap-hour").textContent = `Busiest hour: ${hl(peak)} to ${hl((peak + 1) % 24)}, with ${A.hours[peak]} of ${tot} games (${pct(A.hours[peak] / tot)}%). Each game counts once, at the time of its last word.`;
+
+  const lenData = [];
+  for (let k = 4; k <= 12; k++) { const v = A.lenHist[k] || 0; lenData.push({ label: k === 12 ? "12+" : String(k), value: v, tip: `${k === 12 ? "12+" : k} letters: ${fmtN(v)} words (${pct(v / (A.n || 1))}%)` }); }
+  barChart($("#c-len"), lenData);
+  $("#cap-len").textContent = `Four-letter words are ${pct(A.fourShare)}% of everything you've found. Seven letters or more: ${pct(A.longShare)}%.`;
+
+  if (A.posAvg.length >= 2) {
+    lineChart($("#c-pos"), A.posAvg.map((q) => ({ x: q.i + 1, y: q.avg, label: `#${q.i + 1}`, tip: `Word #${q.i + 1}: ${q.avg.toFixed(2)} letters on average (${q.n} games)` })));
+    const a = A.posAvg[0], b = A.posAvg[Math.min(9, A.posAvg.length - 1)];
+    $("#cap-pos").textContent = `Your first word averages ${a.avg.toFixed(1)} letters. By word #${b.i + 1} it's ${b.avg.toFixed(1)}. Positions with fewer than 10 games are left out.`;
+  } else { $("#c-pos").innerHTML = ""; $("#cap-pos").textContent = "Not enough games yet."; }
+
+  timeChart($("#c-time"), A.played);
+  const big = A.played.reduce((x, y) => (y.words.length > x.words.length ? y : x));
+  $("#cap-time").textContent = `Your biggest game: ${big.words.length} words on ${fmtDate(big.date)}${big.rank ? ` (${big.rank})` : ""}.`;
+
+  const sel = $("#game"); sel.innerHTML = "";
+  [...A.played].reverse().forEach((g, i) => {
+    const o = el("option", null, `${fmtDate(g.date)} · ${g.words.length} words${g.rank ? ` · ${g.rank}` : ""}`);
+    o.value = g.id; sel.append(o);
+  });
+  const pick = [...A.played].reverse().find((g) => g.words.length >= 12) || A.played[A.played.length - 1];
+  sel.value = pick.id;
+  renderReplay();
+}
+function renderReplay() {
+  const g = STATE.played.find((x) => x.id === $("#game").value); if (!g) return;
+  const ol = $("#chips"); ol.innerHTML = "";
+  let ch = 0, pg = 0;
+  g.words.forEach((w, i) => {
+    const prev = g.words[i - 1];
+    const isChain = prev && (w.startsWith(prev) || prev.startsWith(w));
+    const isPg = isPangram(w);
+    ch += isChain ? 1 : 0; pg += isPg ? 1 : 0;
+    const li = el("li", `chip${isChain ? " chain" : ""}${isPg ? " pangram" : ""}`);
+    li.append(el("span", "n", String(i + 1)), el("span", "w", w));
+    li.setAttribute("data-tip", `#${i + 1} · ${w.length} letters${isPg ? " · pangram" : ""}${isChain ? ` · builds on ${prev}` : ""}`);
+    ol.append(li);
+  });
+  const firstLen = g.words[0].length, avg = mean(g.words.map((w) => w.length));
+  const pgIdx = g.words.findIndex(isPangram);
+  const bits = [`You opened with ${g.words[0]} (${firstLen} letters) and averaged ${avg.toFixed(1)} letters per word.`];
+  bits.push(pgIdx >= 0 ? `The pangram came at word #${pgIdx + 1} of ${g.words.length}.` : "No pangram in this one.");
+  if (ch) bits.push(`${ch} ${ch === 1 ? "word built" : "words built"} on the one before.`);
+  $("#replay-note").textContent = bits.join(" ");
+}
+function setStatus(msg, err) { const w = $("#who"); w.textContent = msg; w.classList.toggle("status-err", !!err); }
+
+function loadRaw(raw, label) {
+  try {
+    const games = normalize(raw);
+    if (!games.length) { setStatus("No Spelling Bee games found in that file. Use the file the export script downloads.", true); return; }
+    render(games, label);
+  } catch (e) { setStatus("Couldn't read that file. Use the .json file the export script downloads.", true); }
+}
+function readFile(file) {
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = () => { try { loadRaw(JSON.parse(fr.result), file.name); window.scrollTo({ top: 0, behavior: "smooth" }); } catch { setStatus("That file isn't valid JSON. Use the file the export script downloads.", true); } };
+  fr.readAsText(file);
+}
+
+/* ---------- Wiring ---------- */
+$("#file").addEventListener("change", (e) => readFile(e.target.files[0]));
+const drop = $("#drop");
+["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => readFile(e.dataTransfer.files[0]));
+$("#game").addEventListener("change", renderReplay);
+window.addEventListener("message", (e) => { if (e.data && e.data.type === "spelling-bee-history" && e.data.data) loadRaw(e.data.data, "Your history"); });
+
+const code = $("#code");
+code.textContent = $("#export-src").textContent.trim();
+$("#copy").addEventListener("click", () => {
+  const btn = $("#copy");
+  const done = () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = "Copy script"), 1800); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Cmd+C"; };
+  try { navigator.clipboard.writeText(code.textContent).then(done, fallback); } catch { fallback(); }
+});
+
+const tip = $("#tip");
+document.addEventListener("pointermove", (e) => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t) { tip.hidden = true; return; }
+  tip.textContent = t.getAttribute("data-tip"); tip.hidden = false;
+  const pad = 14, r = tip.getBoundingClientRect();
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+  tip.style.left = `${Math.max(8, x)}px`; tip.style.top = `${Math.max(8, y)}px`;
+});
+document.addEventListener("pointerleave", () => (tip.hidden = true));
+
+// Load the sample history if data/sample.json exists; otherwise wait for a file.
+fetch("data/sample.json")
+  .then((r) => (r.ok ? r.json() : Promise.reject()))
+  .then((s) => loadRaw(s, `Sample: ${s.label || "sample history"}`))
+  .catch(() => setStatus("Load your history file to cast your chart."));
+</script>
+
+</body>
+</html>
