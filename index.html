@@ -21,6 +21,8 @@
   --honey-ink: #6B4500;
   --plum: #5B3F8C;
   --hover: rgba(91, 63, 140, 0.10);
+  --s-me: #B87708;
+  --s-them: #5B3F8C;
   --display: "Gloock", "Iowan Old Style", Georgia, serif;
   --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -29,13 +31,13 @@
   :root:not([data-theme="light"]) {
     --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
     --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
-    --hover: rgba(181, 157, 232, 0.12); color-scheme: dark;
+    --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
   --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
-  --hover: rgba(181, 157, 232, 0.12); color-scheme: dark;
+  --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
@@ -99,6 +101,39 @@ body[data-state="empty"] .source .btn { display: none; }
 .teaser .glyph { grid-row: auto; width: 32px; height: 32px; font-size: 1rem; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* Compare (synastry): shown when a friend's chart came in through a share link. */
+body:not([data-compare]) .compare { display: none; }
+.cmp-top { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 32px 48px; align-items: start; }
+.cmp-hives { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; }
+.cmp-hives figure { align-items: center; }
+.cmp-hives figcaption { font-weight: 600; color: var(--ink); }
+.cmp-hives .hive-cap { grid-column: 1 / -1; margin: 0 auto; }
+.hive .cell.shared:not(.center) { fill: var(--honey-soft); }
+.cmp-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.cmp-table th, .cmp-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+.cmp-table thead th { font-weight: 600; }
+.cmp-table tbody th { font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+.cmp-table td { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cmp-table td.w { font-family: var(--mono); font-size: 0.88rem; }
+.cmp-table tr.match td { background: var(--honey-soft); }
+.cmp-note { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.sw.me { background: var(--s-me); }
+.sw.them { background: var(--s-them); }
+.cmp-charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.compare .legend[hidden], .compare [hidden] { display: none; }
+
+/* Share dialog */
+dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 24px; width: min(480px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(20, 18, 28, 0.45); }
+.share-form { display: flex; flex-direction: column; gap: 14px; }
+.share-form p { color: var(--muted); font-size: 0.92rem; }
+.share-form label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; }
+.share-form label.check { flex-direction: row; align-items: center; gap: 10px; font-weight: 400; }
+.share-form input[type="text"] { font: 1rem var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.share-form input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--plum); }
+.share-form .share-note { color: var(--ink); }
+
 /* Vital numbers */
 .vitals { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .vitals div { padding: 16px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -124,6 +159,9 @@ figcaption { font-size: 0.9rem; color: var(--muted); }
 .chart .bar { fill: var(--honey); }
 .chart .line { fill: none; stroke: var(--honey); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .dot { fill: var(--honey); stroke: var(--surface); stroke-width: 2; }
+.chart .line.s-me { stroke: var(--s-me); }
+.chart .line.s-them { stroke: var(--s-them); }
+.chart .lbl { font: 500 12px var(--body); fill: var(--ink); }
 .chart .sdot { fill: var(--honey); fill-opacity: 0.7; stroke: var(--bg); stroke-width: 1; }
 .chart .hit { fill: transparent; cursor: default; }
 .chart .hit:hover { fill: var(--hover); }
@@ -165,13 +203,16 @@ pre { margin: 0; width: 100%; max-height: 320px; overflow: auto; background: var
 footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; border-top: 1px solid var(--line); padding-top: 20px; }
 
 @media (max-width: 900px) {
+  .cmp-top { grid-template-columns: minmax(0, 1fr); }
+  .cmp-hives { max-width: 360px; }
+  .cmp-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .houses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vitals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vitals div:nth-child(4) { border-left: 0; }
   .vitals div:nth-child(n+4) { border-top: 1px solid var(--line); }
 }
 @media (max-width: 720px) {
-  .hero, .charts, .cast { grid-template-columns: minmax(0, 1fr); }
+  .hero, .charts, .cast, .cmp-charts { grid-template-columns: minmax(0, 1fr); }
   .hive-wrap { max-width: 260px; margin: 0 auto; }
 }
 @media (max-width: 520px) {
@@ -197,8 +238,42 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
       <span class="who" id="who">Loading…</span>
       <label class="btn primary" for="file">Load your history</label>
       <a class="btn" href="#cast">How to get yours</a>
+      <button type="button" class="btn needs-data" id="share-open">Share my chart</button>
     </div>
   </header>
+
+  <section class="section compare" id="compare" aria-labelledby="cmp-title">
+    <div class="section-head">
+      <span class="eyebrow">Synastry · two hives compared</span>
+      <h2 id="cmp-title"></h2>
+      <p id="cmp-lede"></p>
+    </div>
+    <div class="cmp-top">
+      <div class="cmp-hives">
+        <figure><svg class="hive" id="cmp-hive-me" viewBox="-124 -124 248 248" role="img" aria-label="Your seven most-used letters"></svg><figcaption>You</figcaption></figure>
+        <figure><svg class="hive" id="cmp-hive-them" viewBox="-124 -124 248 248" role="img" aria-label="Their seven most-used letters"></svg><figcaption class="cmp-them-name"></figcaption></figure>
+        <p class="hive-cap" id="cmp-hive-cap"></p>
+      </div>
+      <div>
+        <table class="cmp-table">
+          <thead><tr><th scope="col"><span class="vh">Reading</span></th><th scope="col"><span class="key"><i class="sw me"></i>You</span></th><th scope="col"><span class="key"><i class="sw them"></i><span class="cmp-them-name"></span></span></th></tr></thead>
+          <tbody id="cmp-rows"></tbody>
+        </table>
+        <p class="cmp-note" id="cmp-note"></p>
+      </div>
+    </div>
+    <div class="legend" id="cmp-legend"><span><i class="sw me"></i>You</span><span><i class="sw them"></i><span class="cmp-them-name"></span></span></div>
+    <div class="cmp-charts">
+      <figure><h3>When you play</h3><div id="cmp-hour"></div><figcaption id="cmp-cap-hour"></figcaption></figure>
+      <figure><h3>Word length</h3><div id="cmp-len"></div><figcaption>Share of words at each length.</figcaption></figure>
+      <figure><h3>Average length by word order</h3><div id="cmp-pos"></div><figcaption>Average letters in the first word found, the second, and so on.</figcaption></figure>
+    </div>
+    <div class="actions">
+      <a class="btn primary" id="cmp-cast" href="#cast">Cast my chart to compare</a>
+      <button type="button" id="cmp-clear">Stop comparing</button>
+      <button type="button" class="forget">Forget my saved chart</button>
+    </div>
+  </section>
 
   <section class="hero intro" aria-label="About Hive Horoscope">
     <div class="hive-wrap">
@@ -318,9 +393,24 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 
   <footer>
     <p>Readings come from your saved games: the words you found, in the order you found them, and when each game was last saved. Times use this device's time zone.</p>
+    <p>When you load your own history, a summary of your chart is kept in this browser so share links can be compared against it. <button type="button" class="forget">Forget my saved chart</button></p>
     <p>Pangrams are spotted as words that use seven different letters. The full answer lists for older puzzles aren't included, so words you missed aren't counted yet.</p>
   </footer>
 </div>
+<dialog id="share" aria-labelledby="share-title">
+  <form method="dialog" class="share-form">
+    <h3 id="share-title">Share your chart</h3>
+    <p>The link carries a summary of your chart: readings, totals, word-length mix, top letters, and your totem and crown words. Not your word lists. It goes only where you send it; no server stores it.</p>
+    <label>Name on your chart <input type="text" id="share-name" maxlength="30" autocomplete="nickname" placeholder="So friends know it's you"></label>
+    <label class="check"><input type="checkbox" id="share-time" checked> Include when you play (hours and days)</label>
+    <div class="actions">
+      <button type="button" class="btn primary" id="share-copy">Copy link</button>
+      <button type="button" id="share-native" hidden>Share…</button>
+      <button value="close">Close</button>
+    </div>
+    <p class="share-note" id="share-note" role="status"></p>
+  </form>
+</dialog>
 <div id="tip" role="tooltip" hidden></div>
 
 <script type="text/plain" id="export-src">// Spelling Bee history export for Hive Horoscope
@@ -587,7 +677,7 @@ function crown(A) {
 /* ---------- Charts ---------- */
 function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw || 1)); const x = raw / p; return (x <= 1 ? 1 : x <= 2 ? 2 : x <= 5 ? 5 : 10) * p; }
 function topRound(x, y, w, h, r) { r = Math.min(r, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
-function frame(host) { host.innerHTML = ""; const W = 520, H = 230, m = { t: 14, r: 10, b: 28, l: 40 }; const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" }, host); return { svg, W, H, m, iw: W - m.l - m.r, ih: H - m.t - m.b }; }
+function frame(host, W = 520, H = 230, right = 10) { host.innerHTML = ""; const m = { t: 14, r: right, b: 28, l: 40 }; const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" }, host); return { svg, W, H, m, iw: W - m.l - m.r, ih: H - m.t - m.b }; }
 function yAxis(F, min, max, step, fmt = (v) => fmtN(v)) {
   const { svg, m, iw, ih } = F;
   for (let v = min; v <= max + 1e-9; v += step) {
@@ -645,8 +735,37 @@ function timeChart(host, games) {
   games.forEach((g) => svgEl("circle", { cx: X(g.ts), cy: Y(g.words.length), r: 7, class: "hit", "data-tip": `${fmtDate(g.date)}: ${g.words.length} words${g.rank ? `, ${g.rank}` : ""}` }, svg));
 }
 
+// series: [{ name, cls, values }]. Shares one x axis of labels; hover a column to read every series.
+function compareChart(host, labels, series, { every = 1, fmt = (v) => `${v}%`, tip = (i) => labels[i], zero = true } = {}) {
+  if (!series.length) { host.innerHTML = ""; return; }
+  const F = frame(host, 400, 250, series.length > 1 ? 70 : 12), { svg, H, m, iw, ih } = F;
+  const n = Math.max(...series.map((s) => s.values.length)), all = series.flatMap((s) => s.values);
+  const lo = zero ? 0 : Math.min(...all), step = niceStep((Math.max(...all) - lo) / 4 || 1);
+  const min = zero ? 0 : Math.floor(lo / step) * step;
+  let max = Math.ceil(Math.max(...all) / step) * step; if (max === min) max = min + step;
+  yAxis(F, min, max, step, (v) => fmt(Number(v.toFixed(step < 1 ? 1 : 0))));
+  const pad = 8, X = (i) => m.l + pad + (i / Math.max(1, n - 1)) * (iw - 2 * pad), Y = (v) => m.t + ih - (ih * (v - min)) / (max - min);
+  for (let i = 0; i < n; i += every) svgEl("text", { x: X(i), y: H - 8, class: "tick", "text-anchor": "middle" }, svg).textContent = labels[i];
+  if (zero) svgEl("line", { x1: m.l, x2: m.l + iw, y1: m.t + ih, y2: m.t + ih, class: "axis" }, svg);
+  const ends = [];
+  for (const s of series) {
+    svgEl("path", { d: s.values.map((v, i) => `${i ? "L" : "M"}${X(i)},${Y(v)}`).join(""), class: `line ${s.cls}` }, svg);
+    ends.push({ x: X(s.values.length - 1), y: Y(s.values[s.values.length - 1]), name: s.name });
+  }
+  if (series.length > 1) {
+    ends.sort((a, b) => a.y - b.y);
+    if (ends[1].y - ends[0].y < 14) { const mid = (ends[0].y + ends[1].y) / 2; ends[0].y = mid - 7; ends[1].y = mid + 7; }
+    for (const e of ends) svgEl("text", { x: e.x + 8, y: e.y + 4, class: "lbl" }, svg).textContent = e.name;
+  }
+  const sw = (iw - 2 * pad) / Math.max(1, n - 1);
+  for (let i = 0; i < n; i++) {
+    const vals = series.map((s) => `${s.name} ${s.values[i] == null ? "–" : fmt(s.values[i])}`).join(", ");
+    svgEl("rect", { x: X(i) - sw / 2, y: m.t, width: sw, height: ih, class: "hit", "data-tip": `${tip(i)}: ${vals}` }, svg);
+  }
+}
+
 /* ---------- Hive ---------- */
-// cells: [{ letter, tip? }], center first.
+// cells: [{ letter, tip?, shared? }], center first.
 function paintHive(svg, cells) {
   svg.innerHTML = "";
   const r = 46, d = Math.sqrt(3) * r;
@@ -656,7 +775,7 @@ function paintHive(svg, cells) {
   centers.forEach(([cx, cy], i) => {
     const c = cells[i]; if (!c) return;
     const g = svgEl("g", c.tip ? { "data-tip": c.tip } : {}, svg);
-    svgEl("polygon", { points: hex(cx, cy, r - 3), class: i ? "cell" : "cell center" }, g);
+    svgEl("polygon", { points: hex(cx, cy, r - 3), class: (i ? "cell" : "cell center") + (c.shared ? " shared" : "") }, g);
     svgEl("text", { x: cx, y: cy + 2, class: i ? "" : "center" }, g).textContent = c.letter.toUpperCase();
   });
 }
@@ -666,13 +785,163 @@ function drawHive(A) {
   $("#hive-cap").textContent = letters.length ? `Your seven most-used letters, with ${letters[0][0].toUpperCase()} at the center.` : "";
 }
 
+/* ---------- Share links and compare ---------- */
+// A share link carries a small summary (no word lists) in the URL fragment, which never reaches a server.
+const hourLabel = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(`hive-horoscope:${k}`)); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(`hive-horoscope:${k}`) : localStorage.setItem(`hive-horoscope:${k}`, JSON.stringify(v)); } catch {} },
+};
+function summarize(A, name) {
+  const r2 = (x) => Math.round(x * 100) / 100, r3 = (x) => Math.round(x * 1000) / 1000;
+  const top = Object.entries(A.ranks).sort((a, b) => b[1] - a[1])[0] || ["Unranked", 0];
+  const letters = A.letters.slice(0, 7);
+  return {
+    v: 1, name, since: A.played[0].date.slice(0, 7),
+    games: A.played.length, words: A.n, wpg: A.medianPerGame, pg: A.pgCount, pgGames: A.pgGames, pgFirst: A.pgFirst, pgPos: r2(A.pgPos),
+    genius: (A.ranks["Genius"] || 0) + (A.ranks["Queen Bee"] || 0), rank: top[0],
+    avgLen: r2(A.avgLen), firstAvg: r2(A.firstAvg), chain: r3(A.chainRate), ing: r3(A.ingShare), four: r3(A.fourShare), long: r3(A.longShare), dbl: r3(A.doubleShare),
+    len: Array.from({ length: 9 }, (_, i) => A.lenHist[i + 4] || 0), pos: A.posAvg.map((q) => r2(q.avg)),
+    hive: letters.map(([l]) => l).join(""), hiveShare: letters.map(([, c]) => pct(c / (A.letterTotal || 1))),
+    totem: A.topWords[0] || ["—", 0], crown: A.longest[0] || "—",
+    hours: A.hours, days: A.days,
+  };
+}
+// Share links come from anyone, so rebuild the summary from checked, clamped values.
+function cleanSummary(S) {
+  if (!S || S.v !== 1) return null;
+  const num = (x, hi = 1e6) => (Number.isFinite(+x) ? Math.min(hi, Math.max(0, +x)) : 0);
+  const nums = (x, len, hi) => (Array.isArray(x) && x.length === len ? x.map((v) => num(v, hi)) : null);
+  const word = (x) => String(x || "").toLowerCase().replace(/[^a-z]/g, "").slice(0, 24) || "—";
+  const hive = String(S.hive || "").toLowerCase().replace(/[^a-z]/g, "").slice(0, 7);
+  const games = Math.round(num(S.games));
+  if (!games || !hive) return null;
+  const out = {
+    v: 1, name: String(S.name || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 30), since: /^\d{4}-\d{2}$/.test(S.since) ? S.since : "",
+    games, words: Math.round(num(S.words)), wpg: num(S.wpg, 500), pg: Math.round(num(S.pg)), pgGames: Math.min(games, Math.round(num(S.pgGames))), pgFirst: Math.round(num(S.pgFirst)), pgPos: num(S.pgPos, 1),
+    genius: Math.round(num(S.genius)), rank: RANKS.includes(S.rank) ? S.rank : "Unranked",
+    avgLen: num(S.avgLen, 30), firstAvg: num(S.firstAvg, 30), chain: num(S.chain, 1), ing: num(S.ing, 1), four: num(S.four, 1), long: num(S.long, 1), dbl: num(S.dbl, 1),
+    len: nums(S.len, 9) || Array(9).fill(0), pos: Array.isArray(S.pos) ? S.pos.slice(0, 25).map((v) => num(v, 30)) : [],
+    hive, hiveShare: nums(S.hiveShare, hive.length, 100) || Array(hive.length).fill(0),
+    totem: [word(S.totem && S.totem[0]), Math.round(num(S.totem && S.totem[1]))], crown: word(S.crown),
+  };
+  const hours = nums(S.hours, 24), days = nums(S.days, 7);
+  if (hours && days) Object.assign(out, { hours, days });
+  return out;
+}
+// Just enough of analyze()'s shape for the reading functions to name each sign.
+function summaryToA(S) {
+  return {
+    played: { length: S.games }, hours: S.hours || Array(24).fill(0), days: S.days || Array(7).fill(0),
+    firstAvg: S.firstAvg, avgLen: S.avgLen, pgFirst: S.pgFirst, chainRate: S.chain, chainEx: null, ingShare: S.ing,
+    longShare: S.long, fourShare: S.four, doubleShare: S.dbl, pgGames: S.pgGames, pgPos: S.pgPos,
+    ranks: { [S.rank]: 1 }, medianPerGame: S.wpg, topWords: [S.totem], longest: [S.crown],
+  };
+}
+const b64u = {
+  enc: (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
+  dec: (str) => Uint8Array.from(atob(str.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
+};
+const pipeBytes = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+async function packSummary(S) {
+  const bytes = new TextEncoder().encode(JSON.stringify(S));
+  return window.CompressionStream ? "z" + b64u.enc(await pipeBytes(bytes, new CompressionStream("deflate-raw"))) : "j" + b64u.enc(bytes);
+}
+async function unpackSummary(str) {
+  const bytes = b64u.dec(str.slice(1));
+  const raw = str[0] === "z" ? await pipeBytes(bytes, new DecompressionStream("deflate-raw")) : bytes;
+  if (raw.length > 50000) return null;
+  return cleanSummary(JSON.parse(new TextDecoder().decode(raw)));
+}
+
+let ME = null, FRIEND = null;
+function synastry(me, them) {
+  const T = them.name || "Your friend";
+  if (!me) return `This is ${T}'s chart. Cast your own and the two hives line up here, sign by sign.`;
+  const a = summaryToA(me), b = summaryToA(them), bits = [];
+  if (me.hours && them.hours) {
+    const share = (h) => { const t = h.reduce((x, y) => x + y, 0) || 1; return h.map((v) => v / t); };
+    const sm = share(me.hours), st = share(them.hours);
+    const overlap = pct(sm.reduce((sum, v, i) => sum + Math.min(v, st[i]), 0));
+    const sa = sunSign(a).name, sb = sunSign(b).name;
+    bits.push(sa === sb ? `You're both ${sa}s, and ${overlap}% of your playing hours overlap.` : `${T} plays as a ${sb}, you as a ${sa}. ${overlap}% of your playing hours overlap.`);
+  }
+  const shared = [...me.hive].filter((l) => them.hive.includes(l)).length;
+  bits.push(`You share ${shared} of your 7 hive letters${me.hive[0] === them.hive[0] ? `, and both put ${me.hive[0].toUpperCase()} at the center` : ""}.`);
+  const ma = moonSign(a).name, mb = moonSign(b).name;
+  bits.push(ma === mb ? `You're both ${ma.replace("The ", "")}s.` : `${T} is ${mb.replace("The ", "the ")}; you're ${ma.replace("The ", "the ")}.`);
+  bits.push(`${T} stops around ${them.wpg} words a game; you stop around ${me.wpg}.`);
+  if (me.totem[0] === them.totem[0]) bits.push(`You even share a totem word: ${me.totem[0]}.`);
+  return bits.join(" ");
+}
+function renderCompare() {
+  document.body.toggleAttribute("data-compare", !!FRIEND);
+  document.querySelectorAll(".forget").forEach((b) => (b.hidden = !store.get("me")));
+  if (!FRIEND) return;
+  const T = FRIEND.name || "Your friend", short = T.length > 10 ? `${T.slice(0, 9)}…` : T;
+  $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s chart`;
+  $("#cmp-lede").textContent = synastry(ME, FRIEND);
+  document.querySelectorAll(".cmp-them-name").forEach((e) => (e.textContent = T));
+  $("#cmp-cast").hidden = !!ME;
+  $("#cmp-legend").hidden = !ME;
+
+  const cells = (S, other) => (S ? [...S.hive].map((l, i) => ({ letter: l, tip: `${l.toUpperCase()}: ${S.hiveShare[i]}% of letters played`, shared: other && other.hive.includes(l) })) : Array.from({ length: 7 }, () => ({ letter: "?" })));
+  paintHive($("#cmp-hive-me"), cells(ME, FRIEND));
+  paintHive($("#cmp-hive-them"), cells(FRIEND, ME));
+  $("#cmp-hive-cap").textContent = ME ? "Letters you both lean on are shaded." : "";
+
+  const a = ME && summaryToA(ME), b = summaryToA(FRIEND);
+  const hidden = "Not shared";
+  const rows = [
+    ["Sun", (S, A) => (S.hours ? sunSign(A).name : hidden), true],
+    ["Rising", (S, A) => risingSign(A).name, true],
+    ["Moon", (S, A) => moonSign(A).name, true],
+    ["Element", (S, A) => element(A).name, true],
+    ["Pangram", (S, A) => pangramHouse(A).name, true],
+    ["Ruling day", (S, A) => (S.days ? rulingDay(A).name : hidden), true],
+    ["Resting rank", (S) => S.rank, true],
+    ["Totem word", (S) => S.totem[0], true, "w"],
+    ["Crown word", (S) => S.crown, true, "w"],
+    ["Playing since", (S) => (S.since ? fmtDate(`${S.since}-15`, { month: "short", year: "numeric" }) : "—")],
+    ["Games played", (S) => fmtN(S.games)],
+    ["Words per game", (S) => fmtN(S.wpg)],
+    ["Pangrams found", (S) => fmtN(S.pg)],
+    ["Genius days", (S) => fmtN(S.genius)],
+    ["Average word length", (S) => S.avgLen.toFixed(1)],
+    ["Builds on the last word", (S) => `${pct(S.chain)}%`],
+  ];
+  const tb = $("#cmp-rows"); tb.innerHTML = "";
+  let matches = 0;
+  for (const [label, fn, reading, cls] of rows) {
+    const mine = ME ? fn(ME, a) : "?", theirs = fn(FRIEND, b);
+    const match = reading && ME && mine === theirs && mine !== hidden;
+    matches += match ? 1 : 0;
+    const tr = el("tr", match ? "match" : null), th = el("th", null, label);
+    th.scope = "row";
+    tr.append(th, el("td", cls, mine), el("td", cls, theirs));
+    tb.append(tr);
+  }
+  $("#cmp-note").textContent = ME ? (matches ? `Shaded rows are signs you share (${matches} of 9).` : "You don't share a single sign.") : "";
+
+  const shareOf = (arr) => { const t = arr.reduce((x, y) => x + y, 0) || 1; return arr.map((v) => Math.round((1000 * v) / t) / 10); };
+  const series = (fn) => [ME && { name: "You", cls: "s-me", values: fn(ME) }, { name: short, cls: "s-them", values: fn(FRIEND) }].filter((s) => s && s.values && s.values.length);
+  const hours = series((S) => S.hours && shareOf(S.hours));
+  compareChart($("#cmp-hour"), Array.from({ length: 24 }, (_, h) => hourLabel(h)), hours, { every: 6, tip: (h) => `${hourLabel(h)}–${hourLabel((h + 1) % 24)}` });
+  $("#cmp-cap-hour").textContent = hours.length ? "Share of games ending in each hour, in each player's own time zone." : "Neither chart includes playing times.";
+  compareChart($("#cmp-len"), ["4", "5", "6", "7", "8", "9", "10", "11", "12+"], series((S) => shareOf(S.len)), { tip: (i) => `${i === 8 ? "12+" : i + 4} letters` });
+  compareChart($("#cmp-pos"), Array.from({ length: 25 }, (_, i) => `#${i + 1}`), series((S) => S.pos), { every: 3, zero: false, fmt: (v) => v.toFixed(1), tip: (i) => `Word #${i + 1}` });
+}
+
 /* ---------- Render ---------- */
 let STATE = null;
-function render(games, label) {
+function render(games, label, mine) {
   const A = analyze(games);
   STATE = A;
   if (!A.played.length) { setStatus("That file has no played games in it.", true); return; }
   document.body.dataset.state = "loaded";
+  ME = summarize(A, store.get("name") || "");
+  if (mine) store.set("me", ME);
+  renderCompare();
   const first = A.played[0], last = A.played[A.played.length - 1];
   setStatus(`${label} · ${fmtN(A.played.length)} games · ${fmtDate(first.date, { month: "short", year: "numeric" })} to ${fmtDate(last.date, { month: "short", year: "numeric" })}`);
 
@@ -753,11 +1022,11 @@ function renderReplay() {
 }
 function setStatus(msg, err) { const w = $("#who"); w.textContent = msg; w.classList.toggle("status-err", !!err); }
 
-function loadRaw(raw, label) {
+function loadRaw(raw, label, mine = true) {
   try {
     const games = normalize(raw);
     if (!games.length) { setStatus("No Spelling Bee games found in that file. Use the file the export script downloads.", true); return; }
-    render(games, label);
+    render(games, label, mine);
   } catch (e) { setStatus("Couldn't read that file. Use the .json file the export script downloads.", true); }
   if (document.body.dataset.state === "loading") document.body.dataset.state = "empty";
 }
@@ -784,6 +1053,7 @@ window.addEventListener("message", (e) => {
   loadRaw(e.data.data, "Your history");
 });
 const fromNyt = location.hash === "#from-nyt" && window.opener;
+const shareHash = location.hash.match(/^#c=([A-Za-z0-9_-]{2,8000})$/);
 if (fromNyt) {
   history.replaceState(null, "", location.pathname + location.search);
   NYT_ORIGINS.forEach((o) => { try { window.opener.postMessage({ type: "hive-horoscope-ready" }, o); } catch {} });
@@ -824,6 +1094,48 @@ document.addEventListener("pointermove", (e) => {
 });
 document.addEventListener("pointerleave", () => (tip.hidden = true));
 
+// Share dialog
+const shareDlg = $("#share");
+async function shareLink() {
+  const name = $("#share-name").value.trim().slice(0, 30);
+  store.set("name", name);
+  ME.name = name;
+  const S = { ...ME, name };
+  if (!$("#share-time").checked) { delete S.hours; delete S.days; }
+  return `${here}#c=${await packSummary(S)}`;
+}
+$("#share-open").addEventListener("click", () => {
+  $("#share-name").value = store.get("name") || "";
+  $("#share-note").textContent = "";
+  $("#share-native").hidden = !navigator.share;
+  shareDlg.showModal();
+});
+$("#share-copy").addEventListener("click", async () => {
+  const link = await shareLink();
+  const ok = () => ($("#share-note").textContent = "Link copied. When a friend opens it, they see your chart, and once they've cast theirs, the two side by side.");
+  try { await navigator.clipboard.writeText(link); ok(); } catch { window.prompt("Copy this link:", link); }
+});
+$("#share-native").addEventListener("click", async () => {
+  try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee chart with mine.", url: await shareLink() }); } catch {}
+});
+$("#cmp-clear").addEventListener("click", () => { FRIEND = null; store.set("friend", null); renderCompare(); });
+document.querySelectorAll(".forget").forEach((b) => b.addEventListener("click", () => {
+  store.set("me", null); store.set("name", null);
+  if (document.body.dataset.state !== "loaded") ME = null;
+  renderCompare();
+}));
+
+// A friend's chart comes from a share link, or from the last one opened in this browser.
+ME = cleanSummary(store.get("me"));
+FRIEND = cleanSummary(store.get("friend"));
+if (shareHash) {
+  history.replaceState(null, "", location.pathname + location.search);
+  unpackSummary(shareHash[1])
+    .then((S) => { if (!S) throw new Error("bad summary"); FRIEND = S; store.set("friend", S); renderCompare(); window.scrollTo({ top: 0 }); })
+    .catch(() => setStatus("That share link didn't work. Ask for a fresh one.", true));
+}
+renderCompare();
+
 paintHive($("#intro-hive"), [..."ohrscpe"].map((letter) => ({ letter })));
 function showEmpty(msg, err) {
   if (document.body.dataset.state === "loaded") return;
@@ -838,7 +1150,7 @@ if (fromNyt) {
   // Load the sample history if data/sample.json exists; otherwise show the empty state.
   fetch("data/sample.json")
     .then((r) => (r.ok ? r.json() : Promise.reject()))
-    .then((s) => { if (document.body.dataset.state !== "loaded") loadRaw(s, `Sample: ${s.label || "sample history"}`); })
+    .then((s) => { if (document.body.dataset.state !== "loaded") loadRaw(s, `Sample: ${s.label || "sample history"}`, false); })
     .catch(() => showEmpty("No history loaded yet."));
 }
 </script>
