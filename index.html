@@ -23,6 +23,7 @@
   --hover: rgba(91, 63, 140, 0.10);
   --s-me: #B87708;
   --s-them: #5B3F8C;
+  --d-mid: #CBC7D6;
   --display: "Gloock", "Iowan Old Style", Georgia, serif;
   --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -31,13 +32,13 @@
   :root:not([data-theme="light"]) {
     --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
     --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
-    --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; color-scheme: dark;
+    --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; --d-mid: #4C4862; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #14121C; --surface: #1D1A28; --ink: #ECE8F6; --muted: #A49DBA; --line: #34304A;
   --honey: #E6AA36; --honey-soft: #3B2F14; --honey-ink: #F4D38C; --plum: #B59DE8;
-  --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; color-scheme: dark;
+  --hover: rgba(181, 157, 232, 0.12); --s-me: #C08619; --s-them: #977AD3; --d-mid: #4C4862; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -122,6 +123,29 @@ body:not([data-compare]) .compare { display: none; }
 .sw.me { background: var(--s-me); }
 .sw.them { background: var(--s-them); }
 .cmp-charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+/* Head to head: one hex per day. Diverging fill: plum = they found more, gray = about even, honey = you found more. */
+.h2h { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.h2h-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.seg { display: inline-flex; gap: 6px; }
+.seg button { font-size: 0.85rem; padding: 6px 12px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.hexcal { overflow-x: auto; }
+.hexcal svg { display: block; max-width: 100%; height: auto; }
+.hexcal svg.cal { min-width: 600px; }
+.hexcal .tick { font-size: 8px; }
+.hexlegend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: 0.85rem; color: var(--muted); }
+.hexlegend > span { display: inline-flex; align-items: center; gap: 4px; }
+.hexlegend svg { width: 16px; height: 14px; }
+.hx { stroke-width: 0; }
+.hx[data-tip]:hover { stroke: var(--ink); stroke-width: 1.5; }
+.hx.d-none { fill: none; stroke: var(--line); stroke-width: 0.8; }
+.hx.d-them2 { fill: var(--s-them); }
+.hx.d-them1 { fill: color-mix(in oklab, var(--s-them) 50%, var(--d-mid)); }
+.hx.d-even { fill: var(--d-mid); }
+.hx.d-me1 { fill: color-mix(in oklab, var(--s-me) 50%, var(--d-mid)); }
+.hx.d-me2 { fill: var(--s-me); }
+.hx.d-only-me { fill: var(--surface); stroke: var(--s-me); stroke-width: 1.4; }
+.hx.d-only-them { fill: var(--surface); stroke: var(--s-them); stroke-width: 1.4; }
 
 body[data-state="loaded"] .no-data { display: none; }
 .friends { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: start; }
@@ -268,6 +292,18 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
         </table>
         <p class="cmp-note" id="cmp-note"></p>
       </div>
+    </div>
+    <div class="h2h" id="cmp-h2h">
+      <div class="h2h-head">
+        <h3>Head to head, day by day</h3>
+        <div class="seg" role="group" aria-label="Calendar view">
+          <button type="button" data-view="year">By year</button>
+          <button type="button" data-view="both">Days you both played</button>
+        </div>
+      </div>
+      <div class="hexlegend" id="cmp-hexlegend"></div>
+      <div class="hexcal" id="cmp-cal"></div>
+      <p class="cmp-note" id="cmp-cal-cap"></p>
     </div>
     <div class="legend" id="cmp-legend"><span><i class="sw me"></i>You</span><span><i class="sw them"></i><span class="cmp-them-name"></span></span></div>
     <div class="cmp-charts">
@@ -439,6 +475,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     <p>The link carries a summary of your chart: readings, totals, word-length mix, top letters, and your totem and crown words. Not your word lists. It goes only where you send it; no server stores it.</p>
     <label>Name on your chart <input type="text" id="share-name" maxlength="30" autocomplete="nickname" placeholder="So friends know it's you"></label>
     <label class="check"><input type="checkbox" id="share-time" checked> Include when you play (hours and days)</label>
+    <label class="check"><input type="checkbox" id="share-log" checked> Include day-by-day results (which puzzles you played, words found, rank)</label>
     <div class="actions">
       <button type="button" class="btn primary" id="share-copy">Copy link</button>
       <button type="button" id="share-native" hidden>Share…</button>
@@ -840,8 +877,20 @@ function summarize(A, name) {
     len: Array.from({ length: 9 }, (_, i) => A.lenHist[i + 4] || 0), pos: A.posAvg.map((q) => r2(q.avg)),
     hive: letters.map(([l]) => l).join(""), hiveShare: letters.map(([, c]) => pct(c / (A.letterTotal || 1))),
     totem: A.topWords[0] || ["—", 0], crown: A.longest[0] || "—",
-    hours: A.hours, days: A.days,
+    hours: A.hours, days: A.days, log: packLog(A.played),
   };
+}
+// Day-by-day results as a flat [dayDelta, puzzleId, words, rank+1, ...] list, sorted by date; small numbers keep links short.
+const dayNum = (iso) => { const [y, m, d] = iso.split("-").map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+function packLog(played) {
+  const rows = played.map((g) => [dayNum(g.date), Number(g.id), g.words.length, RANKS.indexOf(g.rank) + 1]).filter(([d, id]) => Number.isFinite(d) && id > 0).sort((a, b) => a[0] - b[0]);
+  let prev = 0;
+  return rows.flatMap(([d, id, n, r]) => { const out = [d - prev, id, n, r]; prev = d; return out; });
+}
+function logEntries(S) {
+  const out = []; let day = 0;
+  for (let i = 0; i + 3 < (S.log || []).length; i += 4) { day += S.log[i]; out.push({ day, id: S.log[i + 1], n: S.log[i + 2], r: S.log[i + 3] }); }
+  return out;
 }
 // Share links come from anyone, so rebuild the summary from checked, clamped values.
 function cleanSummary(S) {
@@ -863,6 +912,16 @@ function cleanSummary(S) {
   };
   const hours = nums(S.hours, 24), days = nums(S.days, 7);
   if (hours && days) Object.assign(out, { hours, days });
+  if (Array.isArray(S.log) && S.log.length % 4 === 0 && S.log.length <= 4 * 6000) {
+    const log = []; let day = 0, prev = 0;
+    for (let i = 0; i < S.log.length; i += 4) {
+      day += Math.round(num(S.log[i], 50000));
+      const id = Math.round(num(S.log[i + 1], 1e7)), n = Math.round(num(S.log[i + 2], 300)), r = Math.round(num(S.log[i + 3], RANKS.length));
+      if (day < 10957 || day > 47482 || !id) continue; // keep 2000-2099
+      log.push(day - prev, id, n, r); prev = day;
+    }
+    if (log.length) out.log = log;
+  }
   return out;
 }
 // Just enough of analyze()'s shape for the reading functions to name each sign.
@@ -890,7 +949,91 @@ async function unpackSummary(str) {
   return cleanSummary(JSON.parse(new TextDecoder().decode(raw)));
 }
 
-let ME = null, FRIEND = null;
+let ME = null, FRIEND = null, CAL_VIEW = matchMedia("(max-width: 720px)").matches ? "both" : "year";
+// Pair the two logs by puzzle ID; anything left over pairs up by date. One cell per day.
+function headToHead(me, them) {
+  const a = logEntries(me), b = logEntries(them), bById = new Map(b.map((e) => [e.id, e])), used = new Set(), cells = [], loneA = [];
+  for (const e of a) { const o = bById.get(e.id); if (o && !used.has(o)) { used.add(o); cells.push({ day: Math.min(e.day, o.day), me: e, them: o }); } else loneA.push(e); }
+  const loneB = new Map();
+  for (const e of b) if (!used.has(e)) { if (!loneB.has(e.day)) loneB.set(e.day, []); loneB.get(e.day).push(e); }
+  for (const e of loneA) { const o = loneB.get(e.day)?.shift(); cells.push({ day: e.day, me: e, them: o || null }); }
+  for (const list of loneB.values()) for (const o of list) cells.push({ day: o.day, me: null, them: o });
+  const byDay = new Map();
+  const weight = (c) => (c.me && c.them ? 1000 : 0) + (c.me?.n || 0) + (c.them?.n || 0);
+  for (const c of cells) { const p = byDay.get(c.day); if (!p || weight(c) > weight(p)) byDay.set(c.day, c); }
+  const days = [...byDay.values()].sort((x, y) => x.day - y.day), both = days.filter((c) => c.me && c.them);
+  return { days, both, wins: both.filter((c) => c.me.n > c.them.n).length, losses: both.filter((c) => c.me.n < c.them.n).length };
+}
+function h2hClass(c) {
+  if (!c.me || !c.them) return c.me ? "d-only-me" : "d-only-them";
+  const d = c.me.n / (c.me.n + c.them.n || 1) - 0.5;
+  return Math.abs(d) <= 0.03 ? "d-even" : d > 0 ? (d > 0.15 ? "d-me2" : "d-me1") : d < -0.15 ? "d-them2" : "d-them1";
+}
+const fmtDay = (d) => new Date(d * 864e5).toLocaleDateString(undefined, { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", year: "numeric" });
+function h2hTip(c, T) {
+  const side = (who, e) => (e ? `${who} ${e.n} ${e.n === 1 ? "word" : "words"}${e.r ? ` (${RANKS[e.r - 1]})` : ""}` : `${who} didn't play`);
+  return `${fmtDay(c.day)} · ${side("You", c.me)} · ${side(T, c.them)}`;
+}
+const HEX_R = 7, HEX_W = 1.5 * HEX_R, HEX_H = Math.sqrt(3) * HEX_R;
+const hexPts = (cx, cy, r = HEX_R - 0.9) => Array.from({ length: 6 }, (_, k) => `${(cx + r * Math.cos((Math.PI / 3) * k)).toFixed(1)},${(cy + r * Math.sin((Math.PI / 3) * k)).toFixed(1)}`).join(" ");
+// Flat-topped hexes in columns, odd columns dropped half a cell: a honeycomb. "year" = one comb per year (weeks across, weekdays down); "both" = only shared days, packed in date order.
+function drawHexCal(host, H2H, T, view) {
+  host.innerHTML = "";
+  const svg = svgEl("svg", { role: "img", "aria-label": "Head to head by day" }, host);
+  const put = (col, row, y0, x0, c) => {
+    const p = svgEl("polygon", { points: hexPts(x0 + HEX_R + col * HEX_W, y0 + HEX_H / 2 + row * HEX_H + (col % 2 ? HEX_H / 2 : 0)), class: `hx ${c ? h2hClass(c) : "d-none"}` }, svg);
+    if (c) p.setAttribute("data-tip", h2hTip(c, T));
+  };
+  let W, H;
+  if (view === "both") {
+    const n = H2H.both.length, rows = Math.max(3, Math.round(Math.sqrt(n / 3.46))), cols = Math.ceil(n / rows);
+    H2H.both.forEach((c, i) => put(Math.floor(i / rows), i % rows, 1, 1, c));
+    W = cols * HEX_W + HEX_R / 2 + 2; H = rows * HEX_H + HEX_H / 2 + 2;
+  } else {
+    const byDay = new Map(H2H.days.map((c) => [c.day, c]));
+    const years = [...new Set(H2H.days.map((c) => new Date(c.day * 864e5).getUTCFullYear()))].sort((a, b) => a - b);
+    const L = 30, top = 12, yearH = top + 7 * HEX_H + HEX_H / 2 + 12;
+    years.forEach((Y, yi) => {
+      const j1 = Date.UTC(Y, 0, 1) / 864e5, wd0 = (j1 + 4) % 7, len = Date.UTC(Y + 1, 0, 1) / 864e5 - j1, y0 = yi * yearH + top;
+      svgEl("text", { x: 0, y: y0 + 3.7 * HEX_H, class: "tick" }, svg).textContent = String(Y);
+      for (let m = 0; m < 12; m++) {
+        const col = Math.floor((Date.UTC(Y, m, 1) / 864e5 - j1 + wd0) / 7);
+        svgEl("text", { x: L + col * HEX_W + 2, y: y0 - 3, class: "tick" }, svg).textContent = new Date(Date.UTC(Y, m, 1)).toLocaleDateString(undefined, { month: "short", timeZone: "UTC" });
+      }
+      for (let doy = 0; doy < len; doy++) put(Math.floor((doy + wd0) / 7), (doy + wd0) % 7, y0, L, byDay.get(j1 + doy));
+    });
+    W = L + 54 * HEX_W + HEX_R; H = years.length * yearH;
+  }
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("class", view === "both" ? "" : "cal");
+  svg.style.width = `${W * 1.75}px`;
+}
+function hexLegend(host, T) {
+  host.innerHTML = "";
+  const swatch = (cls) => { const s = svgEl("svg", { viewBox: "0 0 16 14", "aria-hidden": "true" }); svgEl("polygon", { points: hexPts(8, 7, 6.5), class: `hx ${cls}` }, s); return s; };
+  const scale = el("span"); scale.append(el("span", null, `${T} found more`), ...["d-them2", "d-them1", "d-even", "d-me1", "d-me2"].map(swatch), el("span", null, "You found more"));
+  const onlyMe = el("span"); onlyMe.append(swatch("d-only-me"), el("span", null, "Only you played"));
+  const onlyThem = el("span"); onlyThem.append(swatch("d-only-them"), el("span", null, `Only ${T} played`));
+  host.append(scale, onlyMe, onlyThem);
+}
+function renderH2H(T) {
+  const box = $("#cmp-h2h");
+  box.hidden = !ME;
+  if (!ME) return null;
+  const ok = ME.log && FRIEND.log;
+  $("#cmp-cal").innerHTML = ""; $("#cmp-hexlegend").innerHTML = "";
+  box.querySelector(".seg").hidden = !ok;
+  if (!ok) { $("#cmp-cal-cap").textContent = !FRIEND.log ? `${T}'s link doesn't include day-by-day results. Ask for a fresh one.` : "Reload your own history to add your day-by-day results."; return null; }
+  const H2H = headToHead(ME, FRIEND);
+  box.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === CAL_VIEW)));
+  hexLegend($("#cmp-hexlegend"), T);
+  if (CAL_VIEW === "both" && !H2H.both.length) $("#cmp-cal").textContent = "You haven't played any of the same puzzles yet.";
+  else drawHexCal($("#cmp-cal"), H2H, T, CAL_VIEW);
+  const ties = H2H.both.length - H2H.wins - H2H.losses;
+  $("#cmp-cal-cap").textContent = (CAL_VIEW === "both" ? "Each hex is a puzzle you both played, oldest first, filling down then across. " : "Each hex is a day; weeks run across, weekdays down. ") +
+    `You played ${fmtN(H2H.both.length)} of the same puzzles: you found more words on ${H2H.wins}, ${T} on ${H2H.losses}${ties ? `, ${ties} tied` : ""}.`;
+  return H2H;
+}
 function synastry(me, them) {
   const T = them.name || "Your friend";
   if (!me) return `This is ${T}'s chart. Cast your own and the two hives line up here, sign by sign.`;
@@ -907,9 +1050,14 @@ function synastry(me, them) {
   const ma = moonSign(a).name, mb = moonSign(b).name;
   bits.push(ma === mb ? `You're both ${ma.replace("The ", "")}s.` : `${T} is ${mb.replace("The ", "the ")}; you're ${ma.replace("The ", "the ")}.`);
   bits.push(`${T} stops around ${them.wpg} words a game; you stop around ${me.wpg}.`);
+  if (me.log && them.log) {
+    const h = headToHead(me, them);
+    if (h.both.length) bits.push(`On the ${h.both.length} puzzles you both played, you found more words ${h.wins} ${h.wins === 1 ? "time" : "times"} and ${T} ${h.losses}.`);
+  }
   if (me.totem[0] === them.totem[0]) bits.push(`You even share a totem word: ${me.totem[0]}.`);
   return bits.join(" ");
 }
+const shortName = (T) => (T.length > 10 ? `${T.slice(0, 9)}…` : T);
 function renderCompare() {
   const showing = !!FRIEND && !store.get("compare-off");
   document.body.toggleAttribute("data-compare", showing);
@@ -917,7 +1065,7 @@ function renderCompare() {
   $("#fr-saved").hidden = !FRIEND || showing;
   if (FRIEND) $("#fr-show").textContent = `Show ${FRIEND.name || "your friend"}'s chart again`;
   if (!showing) return;
-  const T = FRIEND.name || "Your friend", short = T.length > 10 ? `${T.slice(0, 9)}…` : T;
+  const T = FRIEND.name || "Your friend", short = shortName(T);
   $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s chart`;
   $("#cmp-lede").textContent = synastry(ME, FRIEND);
   document.querySelectorAll(".cmp-them-name").forEach((e) => (e.textContent = T));
@@ -968,6 +1116,7 @@ function renderCompare() {
   compareChart($("#cmp-hour"), Array.from({ length: 24 }, (_, h) => hourLabel(h)), hours, { every: 6, tip: (h) => `${hourLabel(h)}–${hourLabel((h + 1) % 24)}` });
   $("#cmp-cap-hour").textContent = hours.length ? "Share of games ending in each hour, in each player's own time zone." : "Neither chart includes playing times.";
   compareChart($("#cmp-len"), ["4", "5", "6", "7", "8", "9", "10", "11", "12+"], series((S) => shareOf(S.len)), { tip: (i) => `${i === 8 ? "12+" : i + 4} letters` });
+  renderH2H(short);
   compareChart($("#cmp-pos"), Array.from({ length: 25 }, (_, i) => `#${i + 1}`), series((S) => S.pos), { every: 3, zero: false, fmt: (v) => v.toFixed(1), tip: (i) => `Word #${i + 1}` });
 }
 
@@ -1141,6 +1290,7 @@ async function shareLink() {
   ME.name = name;
   const S = { ...ME, name };
   if (!$("#share-time").checked) { delete S.hours; delete S.days; }
+  if (!$("#share-log").checked) delete S.log;
   return `${here}#c=${await packSummary(S)}`;
 }
 const openShare = () => {
@@ -1161,6 +1311,7 @@ $("#share-native").addEventListener("click", async () => {
 const showCompare = () => { store.set("compare-off", null); renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
 $("#cmp-clear").addEventListener("click", () => { store.set("compare-off", true); renderCompare(); });
 $("#fr-show").addEventListener("click", showCompare);
+document.querySelectorAll("#cmp-h2h .seg button").forEach((b) => b.addEventListener("click", () => { CAL_VIEW = b.dataset.view; renderH2H(shortName(FRIEND.name || "Your friend")); }));
 $("#fr-forget").addEventListener("click", () => { FRIEND = null; store.set("friend", null); store.set("compare-off", null); renderCompare(); });
 // Accepts a whole share link or just its #c=… part.
 async function openFriendCode(code) {
