@@ -29,6 +29,8 @@ Personal project (Jim). A static, client-only web page that analyzes a person's 
 - Moon = rate of a word extending/trimming the previous one (Builder ≥15%, Tinkerer ≥7%, Roamer).
 - Houses: Element (word-length mix), Pangram timing, Ruling day, Resting rank, Totem word, Crown word.
 - Pangram = word with 7 distinct letters (inferred; no letter data for old puzzles).
+- Replay hive: puzzle letters are inferred per game (`puzzleLetters()`): center = the one letter in every found word; unused letters show blank; no hive when the center is ambiguous (~20% of sample games, mostly short ones).
+- Page copy: plain language for first-time visitors. Astrology names stay on the readings themselves (Sun/Rising/Moon, sign names); UI labels, buttons and headings avoid jargon like "cast", "chart", "houses", "synastry".
 - Hive = 7 most-used letters.
 
 ## Constraints

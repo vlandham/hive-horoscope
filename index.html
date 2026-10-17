@@ -214,7 +214,11 @@ select { font: 500 0.95rem var(--body); color: var(--ink); background: var(--sur
 .chip.chain { border: 1.5px dashed var(--plum); }
 .chip.pangram { background: var(--honey); border-color: var(--honey); }
 .chip.pangram .w, .chip.pangram .n { color: #1D1A2B; }
-.replay-note { color: var(--muted); font-size: 0.9rem; }
+.replay-note { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+.replay-body { display: flex; gap: 16px 28px; align-items: flex-start; margin-top: 18px; }
+.replay-body > div { flex: 1; min-width: 0; }
+.replay-hive { margin: 0; flex: 0 0 160px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.replay-hive .hive-cap { font-size: 0.8rem; }
 
 /* Cast your own */
 .cast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: start; }
@@ -247,6 +251,8 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
   .hive-wrap { max-width: 260px; margin: 0 auto; }
 }
 @media (max-width: 520px) {
+  .replay-body { flex-direction: column; }
+  .replay-hive { flex-basis: auto; width: 150px; align-self: center; }
   .houses { grid-template-columns: minmax(0, 1fr); }
   .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vitals div { border-left: 0 !important; border-top: 1px solid var(--line); }
@@ -263,19 +269,18 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">Spelling Bee natal chart</span>
     <h1>Hive Horoscope</h1>
     <div class="source">
       <span class="who" id="who">Loading…</span>
       <label class="btn primary" for="file">Load your history</label>
-      <a class="btn" href="#cast">How to get yours</a>
+      <a class="btn no-data" href="#cast">How to get yours</a>
       <a class="btn" href="#friends">Compare with a friend</a>
     </div>
   </header>
 
   <section class="section compare" id="compare" aria-labelledby="cmp-title">
     <div class="section-head">
-      <span class="eyebrow">Synastry · two hives compared</span>
+      <span class="eyebrow">Side by side</span>
       <h2 id="cmp-title"></h2>
       <p id="cmp-lede"></p>
     </div>
@@ -312,9 +317,9 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
       <figure><h3>Average length by word order</h3><div id="cmp-pos"></div><figcaption>Average letters in the first word found, the second, and so on.</figcaption></figure>
     </div>
     <div class="actions">
-      <a class="btn primary" id="cmp-cast" href="#cast">Cast my chart to compare</a>
+      <a class="btn primary" id="cmp-cast" href="#cast">Load my history to compare</a>
       <button type="button" id="cmp-clear">Stop comparing</button>
-      <button type="button" class="forget">Forget my saved chart</button>
+      <button type="button" class="forget">Forget my saved results</button>
     </div>
   </section>
 
@@ -324,17 +329,16 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
       <p class="hive-cap">HOROSCOPE is a pangram: seven letters, every one used.</p>
     </div>
     <div class="intro-text">
-      <span class="eyebrow">Your chart hasn't been cast yet</span>
-      <h2>What do your Spelling Bee games say about you?</h2>
-      <p>Hive Horoscope reads every Spelling Bee game you've saved: the words you found, the order you found them in, and when you played. Then it reads your chart.</p>
+            <h2>What do your Spelling Bee games say about you?</h2>
+      <p>Hive Horoscope looks through every NYT Spelling Bee game you've played: the words you found, the order you found them in, and when you played. Then it turns your habits into a tongue-in-cheek horoscope, with the numbers behind it.</p>
       <ul class="teaser">
-        <li><span class="glyph" aria-hidden="true">☉</span><span><strong>Sun:</strong> the hour you come to the hive.</span></li>
-        <li><span class="glyph" aria-hidden="true">↑</span><span><strong>Rising:</strong> how you open a puzzle.</span></li>
-        <li><span class="glyph" aria-hidden="true">☾</span><span><strong>Moon:</strong> whether you mine one root or roam.</span></li>
+        <li><span class="glyph" aria-hidden="true">☉</span><span><strong>Sun:</strong> the time of day you usually play.</span></li>
+        <li><span class="glyph" aria-hidden="true">↑</span><span><strong>Rising:</strong> how you start a puzzle.</span></li>
+        <li><span class="glyph" aria-hidden="true">☾</span><span><strong>Moon:</strong> whether you build on one word or jump around.</span></li>
       </ul>
-      <p>Plus six houses, your totem and crown words, a replay of any game, word by word, and a way to <a href="#friends">compare your chart with a friend's</a>.</p>
+      <p>You also get charts of your habits, the word you find most and your longest word, a look back at any day's game, and a way to <a href="#friends">compare with a friend</a>.</p>
       <div class="actions">
-        <a class="btn primary" href="#cast">Cast my chart</a>
+        <a class="btn primary" href="#cast">Get started</a>
         <label class="btn" for="file">I have a history file</label>
       </div>
     </div>
@@ -352,16 +356,14 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 
   <section class="section needs-data">
     <div class="section-head">
-      <span class="eyebrow">The six houses</span>
-      <h2>How you play, house by house</h2>
+      <h2>How you play</h2>
     </div>
     <div class="houses" id="houses"></div>
   </section>
 
   <section class="section needs-data">
     <div class="section-head">
-      <span class="eyebrow">Instruments</span>
-      <h2>The readings behind the readings</h2>
+      <h2>The numbers</h2>
       <p>Hover or tap a bar or point for its value.</p>
     </div>
     <div class="charts">
@@ -374,52 +376,30 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
 
   <section class="section needs-data">
     <div class="section-head">
-      <span class="eyebrow">Replay</span>
-      <h2>One game, in the order you found it</h2>
+      <h2>Review a specific day's game</h2>
+      <p>Pick a day to see the words you found, in the order you found them.</p>
     </div>
     <div class="replay-bar">
       <label class="vh" for="game">Choose a game</label>
       <select id="game"></select>
       <div class="legend"><span><i class="sw pg"></i>Pangram</span><span><i class="sw ch"></i>Builds on the word before</span></div>
     </div>
-    <ol class="chips" id="chips"></ol>
-    <p class="replay-note" id="replay-note"></p>
-  </section>
-
-  <section class="section" id="friends">
-    <div class="section-head">
-      <span class="eyebrow">Synastry</span>
-      <h2>Compare with a friend</h2>
-      <p>Send a friend a link to your chart. They see it straight away, and once they've cast theirs, the two line up side by side: the signs you share, the letters you lean on, and when you each play.</p>
-    </div>
-    <div class="friends">
-      <div class="method">
-        <h3>Share yours</h3>
-        <p>The link holds a summary of your chart, not your word lists, and goes only where you send it.</p>
-        <button type="button" class="btn primary needs-data share-open">Share my chart</button>
-        <a class="btn no-data" href="#cast">Cast your chart first</a>
+    <div class="replay-body">
+      <figure class="replay-hive" id="replay-hive-wrap" hidden>
+        <svg class="hive" id="replay-hive" viewBox="-124 -124 248 248" role="img" aria-label="That day's puzzle letters"></svg>
+        <figcaption class="hive-cap" id="replay-hive-cap"></figcaption>
+      </figure>
+      <div>
+        <ol class="chips" id="chips"></ol>
+        <p class="replay-note" id="replay-note"></p>
       </div>
-      <form class="method" id="fr-paste">
-        <h3>Open a friend's</h3>
-        <label for="fr-link">Paste the link they sent you.</label>
-        <div class="paste-row">
-          <input type="text" id="fr-link" inputmode="url" autocomplete="off" spellcheck="false" placeholder="vallandingham.me/hive-horoscope/#c=…">
-          <button type="submit">Compare</button>
-        </div>
-        <p class="cmp-note" id="fr-msg" role="status"></p>
-        <div class="actions" id="fr-saved" hidden>
-          <button type="button" id="fr-show"></button>
-          <button type="button" id="fr-forget">Forget their chart</button>
-        </div>
-      </form>
     </div>
   </section>
 
   <section class="section" id="cast">
     <div class="section-head">
-      <span class="eyebrow">Cast your own</span>
-      <h2>Read your own hive</h2>
-      <p>Your history comes from your own signed-in Spelling Bee tab, and this page reads it in your browser. Nothing is uploaded anywhere, and this page never sees your NYT password or cookies.</p>
+      <h2>See your own Spelling Bee history</h2>
+      <p>You copy your history out of the Spelling Bee while you're signed in to nytimes.com, and this page reads it right in your browser. Nothing is uploaded, and this page never sees your NYT password.</p>
     </div>
     <div class="cast">
       <div class="method">
@@ -428,7 +408,7 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
           <li>Drag this button to your bookmarks bar:<br><a class="btn primary" id="bm" href="#">Hive export</a></li>
           <li>Open the Spelling Bee at nytimes.com/puzzles/spelling-bee in your browser and sign in.</li>
           <li>Click the Hive export bookmark. A panel in the corner counts through your saved games. It takes about ten minutes; keep that tab open and in front.</li>
-          <li>When it's done, choose Open my Hive Horoscope. Your chart opens here.</li>
+          <li>When it's done, choose Open my Hive Horoscope. Your results open here.</li>
         </ol>
         <details id="phone-steps">
           <summary>On a phone</summary>
@@ -463,17 +443,45 @@ footer { color: var(--muted); font-size: 0.88rem; display: flex; flex-direction:
     </div>
   </section>
 
+  <section class="section" id="friends">
+    <div class="section-head">
+      <h2>Compare with a friend</h2>
+      <p>Send a friend a link to your results. Once they've loaded their own history, you'll see the two side by side: the signs you share, your favorite letters, when you each play, and who found more words on the days you both played.</p>
+    </div>
+    <div class="friends">
+      <div class="method">
+        <h3>Share yours</h3>
+        <p>The link holds a summary of your stats, not the words you found. It isn't stored anywhere; only the people you send it to can see it.</p>
+        <button type="button" class="btn primary needs-data share-open">Share my results</button>
+        <a class="btn no-data" href="#cast">Load your history first</a>
+      </div>
+      <form class="method" id="fr-paste">
+        <h3>Open a friend's</h3>
+        <label for="fr-link">Paste the link they sent you.</label>
+        <div class="paste-row">
+          <input type="text" id="fr-link" inputmode="url" autocomplete="off" spellcheck="false" placeholder="vallandingham.me/hive-horoscope/#c=…">
+          <button type="submit">Compare</button>
+        </div>
+        <p class="cmp-note" id="fr-msg" role="status"></p>
+        <div class="actions" id="fr-saved" hidden>
+          <button type="button" id="fr-show"></button>
+          <button type="button" id="fr-forget">Forget their results</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
   <footer>
     <p>Readings come from your saved games: the words you found, in the order you found them, and when each game was last saved. Times use this device's time zone.</p>
-    <p>When you load your own history, a summary of your chart is kept in this browser so share links can be compared against it. <button type="button" class="forget">Forget my saved chart</button></p>
+    <p>When you load your own history, a summary is saved in this browser so you can compare with friends later. <button type="button" class="forget">Forget my saved results</button></p>
     <p>Pangrams are spotted as words that use seven different letters. The full answer lists for older puzzles aren't included, so words you missed aren't counted yet.</p>
   </footer>
 </div>
 <dialog id="share" aria-labelledby="share-title">
   <form method="dialog" class="share-form">
-    <h3 id="share-title">Share your chart</h3>
-    <p>The link carries a summary of your chart: readings, totals, word-length mix, top letters, and your totem and crown words. Not your word lists. It goes only where you send it; no server stores it.</p>
-    <label>Name on your chart <input type="text" id="share-name" maxlength="30" autocomplete="nickname" placeholder="So friends know it's you"></label>
+    <h3 id="share-title">Share your results</h3>
+    <p>The link holds a summary: your signs, totals, word lengths, favorite letters, and your most-found and longest words. Not the full list of words you found. It isn't stored anywhere; only the people you send it to can see it.</p>
+    <label>Your name <input type="text" id="share-name" maxlength="30" autocomplete="nickname" placeholder="So friends know it's you"></label>
     <label class="check"><input type="checkbox" id="share-time" checked> Include when you play (hours and days)</label>
     <label class="check"><input type="checkbox" id="share-log" checked> Include day-by-day results (which puzzles you played, words found, rank)</label>
     <div class="actions">
@@ -729,7 +737,7 @@ function pangramHouse(A) {
 }
 function rulingDay(A) {
   const o = A.days.map((_, i) => i).sort((a, b) => A.days[b] - A.days[a]);
-  return { name: DAYS[o[0]], body: `${DAYS[o[0]]} rules your hive with ${A.days[o[0]]} games. ${DAYS[o[6]]} is your quietest day, with ${A.days[o[6]]}.` };
+  return { name: DAYS[o[0]], body: `You play most on ${DAYS[o[0]]}s, with ${A.days[o[0]]} games. ${DAYS[o[6]]} is your quietest day, with ${A.days[o[6]]}.` };
 }
 function restingRank(A) {
   const top = Object.entries(A.ranks).sort((a, b) => b[1] - a[1])[0] || ["Unranked", 0];
@@ -1036,7 +1044,7 @@ function renderH2H(T) {
 }
 function synastry(me, them) {
   const T = them.name || "Your friend";
-  if (!me) return `This is ${T}'s chart. Cast your own and the two hives line up here, sign by sign.`;
+  if (!me) return `These are ${T}'s results. Load your own history to see how you compare.`;
   const a = summaryToA(me), b = summaryToA(them), bits = [];
   if (me.hours && them.hours) {
     const share = (h) => { const t = h.reduce((x, y) => x + y, 0) || 1; return h.map((v) => v / t); };
@@ -1054,7 +1062,7 @@ function synastry(me, them) {
     const h = headToHead(me, them);
     if (h.both.length) bits.push(`On the ${h.both.length} puzzles you both played, you found more words ${h.wins} ${h.wins === 1 ? "time" : "times"} and ${T} ${h.losses}.`);
   }
-  if (me.totem[0] === them.totem[0]) bits.push(`You even share a totem word: ${me.totem[0]}.`);
+  if (me.totem[0] === them.totem[0]) bits.push(`You even have the same most-found word: ${me.totem[0]}.`);
   return bits.join(" ");
 }
 const shortName = (T) => (T.length > 10 ? `${T.slice(0, 9)}…` : T);
@@ -1063,10 +1071,10 @@ function renderCompare() {
   document.body.toggleAttribute("data-compare", showing);
   document.querySelectorAll(".forget").forEach((b) => (b.hidden = !store.get("me")));
   $("#fr-saved").hidden = !FRIEND || showing;
-  if (FRIEND) $("#fr-show").textContent = `Show ${FRIEND.name || "your friend"}'s chart again`;
+  if (FRIEND) $("#fr-show").textContent = `Show ${FRIEND.name || "your friend"}'s results again`;
   if (!showing) return;
   const T = FRIEND.name || "Your friend", short = shortName(T);
-  $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s chart`;
+  $("#cmp-title").textContent = ME ? `${T} and you` : `${T}'s results`;
   $("#cmp-lede").textContent = synastry(ME, FRIEND);
   document.querySelectorAll(".cmp-them-name").forEach((e) => (e.textContent = T));
   $("#cmp-cast").hidden = !!ME;
@@ -1075,7 +1083,7 @@ function renderCompare() {
   const cells = (S, other) => (S ? [...S.hive].map((l, i) => ({ letter: l, tip: `${l.toUpperCase()}: ${S.hiveShare[i]}% of letters played`, shared: other && other.hive.includes(l) })) : Array.from({ length: 7 }, () => ({ letter: "?" })));
   paintHive($("#cmp-hive-me"), cells(ME, FRIEND));
   paintHive($("#cmp-hive-them"), cells(FRIEND, ME));
-  $("#cmp-hive-cap").textContent = ME ? "Letters you both lean on are shaded." : "";
+  $("#cmp-hive-cap").textContent = ME ? "Shaded letters are in both of your top seven." : "";
 
   const a = ME && summaryToA(ME), b = summaryToA(FRIEND);
   const hidden = "Not shared";
@@ -1085,10 +1093,10 @@ function renderCompare() {
     ["Moon", (S, A) => moonSign(A).name, true],
     ["Element", (S, A) => element(A).name, true],
     ["Pangram", (S, A) => pangramHouse(A).name, true],
-    ["Ruling day", (S, A) => (S.days ? rulingDay(A).name : hidden), true],
-    ["Resting rank", (S) => S.rank, true],
-    ["Totem word", (S) => S.totem[0], true, "w"],
-    ["Crown word", (S) => S.crown, true, "w"],
+    ["Busiest day", (S, A) => (S.days ? rulingDay(A).name : hidden), true],
+    ["Usual finish", (S) => S.rank, true],
+    ["Most-found word", (S) => S.totem[0], true, "w"],
+    ["Longest word", (S) => S.crown, true, "w"],
     ["Playing since", (S) => (S.since ? fmtDate(`${S.since}-15`, { month: "short", year: "numeric" }) : "—")],
     ["Games played", (S) => fmtN(S.games)],
     ["Words per game", (S) => fmtN(S.wpg)],
@@ -1108,13 +1116,13 @@ function renderCompare() {
     tr.append(th, el("td", cls, mine), el("td", cls, theirs));
     tb.append(tr);
   }
-  $("#cmp-note").textContent = ME ? (matches ? `Shaded rows are signs you share (${matches} of 9).` : "You don't share a single sign.") : "";
+  $("#cmp-note").textContent = ME ? (matches ? `Shaded rows are where you match (${matches} of 9).` : "You don't share a single sign.") : "";
 
   const shareOf = (arr) => { const t = arr.reduce((x, y) => x + y, 0) || 1; return arr.map((v) => Math.round((1000 * v) / t) / 10); };
   const series = (fn) => [ME && { name: "You", cls: "s-me", values: fn(ME) }, { name: short, cls: "s-them", values: fn(FRIEND) }].filter((s) => s && s.values && s.values.length);
   const hours = series((S) => S.hours && shareOf(S.hours));
   compareChart($("#cmp-hour"), Array.from({ length: 24 }, (_, h) => hourLabel(h)), hours, { every: 6, tip: (h) => `${hourLabel(h)}–${hourLabel((h + 1) % 24)}` });
-  $("#cmp-cap-hour").textContent = hours.length ? "Share of games ending in each hour, in each player's own time zone." : "Neither chart includes playing times.";
+  $("#cmp-cap-hour").textContent = hours.length ? "Share of games ending in each hour, in each player's own time zone." : "Neither of you shared playing times.";
   compareChart($("#cmp-len"), ["4", "5", "6", "7", "8", "9", "10", "11", "12+"], series((S) => shareOf(S.len)), { tip: (i) => `${i === 8 ? "12+" : i + 4} letters` });
   renderH2H(short);
   compareChart($("#cmp-pos"), Array.from({ length: 25 }, (_, i) => `#${i + 1}`), series((S) => S.pos), { every: 3, zero: false, fmt: (v) => v.toFixed(1), tip: (i) => `Word #${i + 1}` });
@@ -1154,8 +1162,8 @@ function render(games, label, mine) {
     houses.append(c);
   };
   const e = element(A), p = pangramHouse(A), rd = rulingDay(A), rr = restingRank(A), t = totem(A), cr = crown(A);
-  add("Element", e.name, e.body); add("Pangram", p.name, p.body); add("Ruling day", rd.name, rd.body);
-  add("Resting rank", rr.name, rr.body); add("Totem word", t.word, t.body, true); add("Crown word", cr.word, cr.body, true);
+  add("Element", e.name, e.body); add("Pangrams", p.name, p.body); add("Busiest day", rd.name, rd.body);
+  add("Usual finish", rr.name, rr.body); add("Most-found word", t.word, t.body, true); add("Longest word", cr.word, cr.body, true);
 
   const hl = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
   const tot = A.played.length;
@@ -1187,8 +1195,27 @@ function render(games, label, mine) {
   sel.value = pick.id;
   renderReplay();
 }
+// The saved games don't include the puzzle's letters, so work them out from the words found:
+// the center letter is the only one in every word. Letters never used stay blank.
+function puzzleLetters(words) {
+  const all = [...new Set(words.join(""))];
+  const common = all.filter((l) => words.every((w) => w.includes(l)));
+  if (common.length !== 1 || all.length > 7 || !/^[a-z]+$/.test(all.join(""))) return null;
+  return { center: common[0], outer: all.filter((l) => l !== common[0]).sort() };
+}
+function renderReplayHive(words) {
+  const L = puzzleLetters(words);
+  $("#replay-hive-wrap").hidden = !L;
+  if (!L) return;
+  const used = (l) => words.filter((w) => w.includes(l)).length;
+  const cells = [L.center, ...L.outer].map((l) => ({ letter: l, tip: `${l.toUpperCase()}: in ${used(l)} of ${words.length} words` }));
+  while (cells.length < 7) cells.push({ letter: "", tip: "A letter you didn't use in any word" });
+  paintHive($("#replay-hive"), cells);
+  $("#replay-hive-cap").textContent = L.outer.length === 6 ? "That day's letters, worked out from your words." : "Worked out from your words. Blanks are letters you never used.";
+}
 function renderReplay() {
   const g = STATE.played.find((x) => x.id === $("#game").value); if (!g) return;
+  renderReplayHive(g.words);
   const ol = $("#chips"); ol.innerHTML = "";
   let ch = 0, pg = 0;
   g.words.forEach((w, i) => {
@@ -1302,11 +1329,11 @@ const openShare = () => {
 document.querySelectorAll(".share-open").forEach((b) => b.addEventListener("click", openShare));
 $("#share-copy").addEventListener("click", async () => {
   const link = await shareLink();
-  const ok = () => ($("#share-note").textContent = "Link copied. When a friend opens it, they see your chart, and once they've cast theirs, the two side by side.");
+  const ok = () => ($("#share-note").textContent = "Link copied. Once your friend loads their own history, they'll see the two of you side by side.");
   try { await navigator.clipboard.writeText(link); ok(); } catch { window.prompt("Copy this link:", link); }
 });
 $("#share-native").addEventListener("click", async () => {
-  try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee chart with mine.", url: await shareLink() }); } catch {}
+  try { await navigator.share({ title: "My Hive Horoscope", text: "Compare your Spelling Bee habits with mine.", url: await shareLink() }); } catch {}
 });
 const showCompare = () => { COMPARING = true; renderCompare(); $("#compare").scrollIntoView({ behavior: "smooth" }); };
 $("#cmp-clear").addEventListener("click", () => { COMPARING = false; renderCompare(); });
