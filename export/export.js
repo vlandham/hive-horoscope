@@ -5,7 +5,8 @@
 // Shows a progress panel; when done, opens Hive Horoscope with your history or downloads it as a file.
 void (async () => {
   const HIVE_URL = "https://vallandingham.me/hive-horoscope/";
-  const ID_MIN = 1, ID_MAX = 32000, BATCH = 25, DELAY_MS = 300;
+  const ID_MIN = 1, ID_MAX = 32000, ID_MARGIN = 500, BATCH = 25;
+  const MAX_PARALLEL = 3, DELAY_MS = 300, MAX_DELAY_MS = 5000, RECOVER_AFTER = 20, MAX_TRIES = 3;
   if (location.hostname !== "www.nytimes.com") { alert("Open the Spelling Bee on nytimes.com, sign in, then run this again."); return; }
   if (document.getElementById("hive-export")) return;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -45,23 +46,92 @@ void (async () => {
   let stopped = false;
   $("x").onclick = () => { stopped = true; host.remove(); };
 
-  const states = new Map();
-  const total = Math.ceil((ID_MAX - ID_MIN + 1) / BATCH);
-  let n = 0;
-  for (let lo = ID_MIN; lo <= ID_MAX && !stopped; lo += BATCH) {
+  // Highest puzzle ID the page knows about (today's and recent puzzles), so the sweep can stop just past it.
+  const newestId = () => {
+    let max = 0;
+    const walk = (node, depth) => {
+      if (!node || typeof node !== "object" || depth > 4) return;
+      if (Number.isInteger(node.id) && node.id < 1e6) max = Math.max(max, node.id);
+      Object.values(node).forEach((v) => walk(v, depth + 1));
+    };
+    try { walk(window.gameData, 0); } catch (e) {}
+    return max;
+  };
+  const top = newestId();
+  const idMax = top ? Math.max(top + ID_MARGIN, 1000) : ID_MAX;
+
+  const queue = [];
+  for (let lo = ID_MIN; lo <= idMax; lo += BATCH) {
     const ids = [];
-    for (let id = lo; id < lo + BATCH && id <= ID_MAX; id++) ids.push(id);
-    n++;
-    try {
-      const res = await fetch(url(ids), { credentials: "include" });
-      if (res.status === 429) { say("NYT asked us to slow down. Waiting 30 seconds\u2026"); await sleep(30000); lo -= BATCH; n--; continue; }
-      if (res.status === 401 || res.status === 403) { say("You're not signed in. Sign in to nytimes.com and run this again."); return; }
-      if (res.ok) for (const s of collect(await res.json())) states.set(String(s.puzzle_id), s);
-    } catch (e) { console.warn(`Error at ids ${ids[0]}-${ids[ids.length - 1]}`, e); }
-    $("fill").style.width = `${(100 * n) / total}%`;
-    say(`Reading your saved games: ${Math.round((100 * n) / total)}%, ${states.size} found. Takes about ten minutes; keep this tab open and in front.`);
-    await sleep(DELAY_MS);
+    for (let id = lo; id < lo + BATCH && id <= idMax; id++) ids.push(id);
+    queue.push(ids);
   }
+  const total = queue.length;
+  const states = new Map();
+  const tries = new Map();
+  let done = 0, inFlight = 0, fatal = false;
+
+  // Pace: up to MAX_PARALLEL requests in flight, each followed by a pause. Any sign of strain
+  // (429, 5xx, network error) drops to one request at a time with a longer pause; a run of clean
+  // replies earns the speed back a step at a time.
+  let parallel = MAX_PARALLEL, delay = DELAY_MS, clean = 0, holdUntil = 0;
+  const strain = (wait) => {
+    parallel = 1; delay = Math.min(delay * 2, MAX_DELAY_MS); clean = 0;
+    holdUntil = Math.max(holdUntil, Date.now() + wait);
+  };
+  const fine = () => {
+    if (++clean < RECOVER_AFTER) return;
+    clean = 0;
+    if (delay > DELAY_MS) delay = Math.max(DELAY_MS, Math.round(delay / 2));
+    else if (parallel < MAX_PARALLEL) parallel++;
+  };
+  const retry = (ids) => {
+    const k = ids[0], t = (tries.get(k) || 0) + 1;
+    tries.set(k, t);
+    if (t <= MAX_TRIES) { queue.push(ids); return true; }
+    console.warn(`Gave up on ids ${ids[0]}-${ids[ids.length - 1]}`);
+    return false;
+  };
+  const report = () => {
+    $("fill").style.width = `${(100 * done) / total}%`;
+    say(`Reading your saved games: ${Math.round((100 * done) / total)}%, ${states.size} found. Takes a few minutes; keep this tab open and in front.`);
+  };
+
+  const worker = async (slot) => {
+    while (!stopped && !fatal) {
+      const wait = holdUntil - Date.now();
+      if (wait > 0) { await sleep(Math.min(wait, 1000)); continue; }
+      if (slot >= parallel) { await sleep(500); continue; }
+      const ids = queue.shift();
+      if (!ids) {
+        if (!inFlight) return;
+        await sleep(500); continue;
+      }
+      let counted = true;
+      inFlight++;
+      try {
+        const res = await fetch(url(ids), { credentials: "include" });
+        if (res.status === 401 || res.status === 403) { fatal = true; say("You're not signed in. Sign in to nytimes.com and run this again."); return; }
+        if (res.status === 429) {
+          strain(30000); counted = !retry(ids);
+          say("NYT asked us to slow down. Waiting 30 seconds, then going slower\u2026");
+        } else if (res.status >= 500) {
+          strain(5000); counted = !retry(ids);
+        } else {
+          if (res.ok) for (const s of collect(await res.json())) states.set(String(s.puzzle_id), s);
+          fine();
+        }
+      } catch (e) {
+        console.warn(`Error at ids ${ids[0]}-${ids[ids.length - 1]}`, e);
+        strain(5000); counted = !retry(ids);
+      } finally { inFlight--; }
+      if (counted) { done++; report(); }
+      await sleep(delay);
+    }
+  };
+  report();
+  await Promise.all(Array.from({ length: MAX_PARALLEL }, (_, i) => worker(i)));
+  if (fatal) return;
   if (stopped) return;
 
   const output = { exported_at: new Date().toISOString(), puzzle_count: states.size, states: [...states.values()] };

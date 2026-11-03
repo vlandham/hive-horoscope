@@ -20,7 +20,7 @@ Personal project (Jim). A static, client-only web page that analyzes a person's 
 - Read: `GET /svc/games/state/spelling_bee/latests?puzzle_ids=a,b,c` with the user's NYT cookies (same-origin fetch from nytimes.com). Max 25 IDs per request; 50+ returns 400.
 - Each state: `{puzzle_id, timestamp, print_date, schema_version, game_data:{answers:[...], rank, isRevealed}}`. `answers` is in the ORDER FOUND. `timestamp` is the last save only; there is no per-word timing. Old states (schema 0.2.x/0.16) have empty `print_date` and may lack `rank`.
 - Write (do not call): `POST /svc/games/state` saves progress.
-- Puzzle IDs are NOT chronological (Oct 5–17 2026 spanned 14844–26032). Export sweeps IDs 1–32000 at 25/request, ~300ms apart.
+- Puzzle IDs are NOT chronological (Oct 5–17 2026 spanned 14844–26032). Export sweeps IDs 1 to (newest ID in `window.gameData` + 500, else 32000) at 25/request, up to 3 in flight with ~300ms pauses; on 429/5xx/network errors it drops to 1 in flight with a longer pause, retries the batch (max 3 tries), and earns speed back after 20 clean replies.
 - Many states have empty `answers` (opened, not played).
 - Puzzle letters/full answer lists only come from `window.gameData` on the puzzle page, for roughly the last two weeks. Older answer lists would need a third-party archive matched by date.
 - NYT account stats (`player.stats.spelling_bee`) report more words/pangrams than the saved states contain (4109 vs 2771 for Jim); treat states as the source for order, stats as official totals.

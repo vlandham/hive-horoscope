@@ -13,7 +13,7 @@ Live at https://vallandingham.me/hive-horoscope/ (GitHub Pages, deployed from `m
 
 ## Get your data
 
-The page offers a "Hive export" bookmarklet built from `export/export.js`. Run it on https://www.nytimes.com/puzzles/spelling-bee while signed in (or paste the script into the DevTools console). A panel shows progress for about ten minutes, then offers:
+The page offers a "Hive export" bookmarklet built from `export/export.js`. Run it on https://www.nytimes.com/puzzles/spelling-bee while signed in (or paste the script into the DevTools console). A panel shows progress for a few minutes, then offers:
 
 - **Open my Hive Horoscope**: opens the page and hands the history over with `postMessage` (the page says it's ready, the panel posts back; both sides check origins).
 - **Download file**: a `.json` file to drop on the page later.
