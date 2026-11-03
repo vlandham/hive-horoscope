@@ -6,7 +6,7 @@
 void (async () => {
   const HIVE_URL = "https://vallandingham.me/hive-horoscope/";
   const ID_MIN = 1, ID_MAX = 32000, ID_MARGIN = 500, BATCH = 25;
-  const MAX_PARALLEL = 3, DELAY_MS = 300, MAX_DELAY_MS = 5000, RECOVER_AFTER = 20, MAX_TRIES = 3;
+  const MAX_PARALLEL = 3, DELAY_MS = 300, MAX_DELAY_MS = 5000, RECOVER_AFTER = 20, MAX_TRIES = 5;
   if (location.hostname !== "www.nytimes.com") { alert("Open the Spelling Bee on nytimes.com, sign in, then run this again."); return; }
   if (document.getElementById("hive-export")) return;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -46,7 +46,8 @@ void (async () => {
   let stopped = false;
   $("x").onclick = () => { stopped = true; host.remove(); };
 
-  // Highest puzzle ID the page knows about (today's and recent puzzles), so the sweep can stop just past it.
+  // Puzzle IDs aren't in date order, so recent IDs say nothing about older ones: sweep the full range,
+  // and only reach further if the page shows a puzzle ID near or past the top of it.
   const newestId = () => {
     let max = 0;
     const walk = (node, depth) => {
@@ -58,7 +59,7 @@ void (async () => {
     return max;
   };
   const top = newestId();
-  const idMax = top ? Math.max(top + ID_MARGIN, 1000) : ID_MAX;
+  const idMax = Math.max(ID_MAX, top + ID_MARGIN);
 
   const queue = [];
   for (let lo = ID_MIN; lo <= idMax; lo += BATCH) {
@@ -69,7 +70,7 @@ void (async () => {
   const total = queue.length;
   const states = new Map();
   const tries = new Map();
-  let done = 0, inFlight = 0, fatal = false;
+  let done = 0, inFlight = 0, fatal = false, lost = 0;
 
   // Pace: up to MAX_PARALLEL requests in flight, each followed by a pause. Any sign of strain
   // (429, 5xx, network error) drops to one request at a time with a longer pause; a run of clean
@@ -89,6 +90,7 @@ void (async () => {
     const k = ids[0], t = (tries.get(k) || 0) + 1;
     tries.set(k, t);
     if (t <= MAX_TRIES) { queue.push(ids); return true; }
+    lost++;
     console.warn(`Gave up on ids ${ids[0]}-${ids[ids.length - 1]}`);
     return false;
   };
@@ -138,7 +140,7 @@ void (async () => {
   const played = output.states.filter((s) => s.game_data.answers.length).length;
   console.log(`Done: ${states.size} games exported.`);
   if (!played) { say("No played games found. Make sure you're signed in to the account you play on, then run this again."); return; }
-  say(`Done: ${played} played games. Open them in Hive Horoscope, or download a copy to keep.`);
+  say(`Done: ${played} played games. ${lost ? `Some puzzle IDs (${lost * BATCH}) couldn't be read, so a few games may be missing; running this again later may find them. ` : ""}Open them in Hive Horoscope, or download a copy to keep.`);
   $("fill").style.width = "100%";
   $("row").hidden = false;
 
