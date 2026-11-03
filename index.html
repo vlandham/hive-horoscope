@@ -1131,7 +1131,7 @@ function cleanSummary(S) {
   const hours = nums(S.hours, 24), days = nums(S.days, 7);
   if (hours && days) Object.assign(out, { hours, days });
   if (S.open === "view") out.open = "view"; // links without it (the older ones) open as a comparison
-  if (Array.isArray(S.log) && S.log.length % 4 === 0 && S.log.length <= 4 * 6000) {
+  if (Array.isArray(S.log) && S.log.length % 4 === 0 && S.log.length <= 4 * MAX_LOG_GAMES) {
     const log = []; let day = 0, prev = 0;
     for (let i = 0; i < S.log.length; i += 4) {
       day += Math.round(num(S.log[i], 50000));
@@ -1167,6 +1167,9 @@ function summaryA(S) {
     lenHist: Object.fromEntries(S.len.map((v, i) => [i + 4, v])), posAvg: S.pos.map((avg, i) => ({ i, avg, n: 0 })),
   });
 }
+// Share-link limits, sized for a log of up to MAX_LOG_GAMES (about 7 code chars, 16 JSON bytes a game).
+const MAX_LOG_GAMES = 6000, MAX_CODE = 48000, MAX_JSON = 120000;
+const codeRe = (anchored) => new RegExp(`${anchored ? "^" : ""}#c=([A-Za-z0-9_-]{2,${MAX_CODE}})${anchored ? "$" : ""}`);
 const b64u = {
   enc: (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
   dec: (str) => Uint8Array.from(atob(str.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
@@ -1179,7 +1182,7 @@ async function packSummary(S) {
 async function unpackSummary(str) {
   const bytes = b64u.dec(str.slice(1));
   const raw = str[0] === "z" ? await pipeBytes(bytes, new DecompressionStream("deflate-raw")) : bytes;
-  if (raw.length > 50000) return null;
+  if (raw.length > MAX_JSON) return null;
   return cleanSummary(JSON.parse(new TextDecoder().decode(raw)));
 }
 
@@ -1537,7 +1540,7 @@ window.addEventListener("message", (e) => {
   loadRaw(e.data.data, "Your history");
 });
 const fromNyt = location.hash === "#from-nyt" && window.opener;
-const shareHash = location.hash.match(/^#c=([A-Za-z0-9_-]{2,8000})$/);
+const shareHash = location.hash.match(codeRe(true));
 if (fromNyt) {
   history.replaceState(null, "", location.pathname + location.search);
   NYT_ORIGINS.forEach((o) => { try { window.opener.postMessage({ type: "hive-horoscope-ready" }, o); } catch {} });
@@ -1646,7 +1649,7 @@ async function openFriendCode(code, compare) {
 }
 $("#fr-paste").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const m = $("#fr-link").value.trim().match(/#c=([A-Za-z0-9_-]{2,8000})/);
+  const m = $("#fr-link").value.trim().match(codeRe(false));
   const ok = m && (await openFriendCode(m[1], true));
   $("#fr-msg").textContent = ok ? "" : "That doesn't look like a Hive Horoscope share link. Copy the whole link and try again.";
   if (ok) $("#fr-link").value = "";
